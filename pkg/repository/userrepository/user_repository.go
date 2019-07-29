@@ -9,12 +9,18 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/pkg/entity"
 )
 
+type UserRepository interface {
+	New(context.Context, string, int64) (int64, error)
+	GetByID(context.Context, int64) (entity.User, error)
+	DeleteByID(context.Context, int64) error
+	UpdateByID(context.Context, int64, string, int64) error
+}
 type repository struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) repository {
-	return repository{db}
+func New(db *sql.DB) UserRepository {
+	return &repository{db}
 }
 
 func (r repository) New(ctx context.Context, username string, balance int64) (int64, error) {
