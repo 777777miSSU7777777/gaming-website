@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/777777miSSU7777777/gaming-website/pkg/entity"
 	"github.com/777777miSSU7777777/gaming-website/pkg/repository/userrepository"
@@ -24,6 +25,9 @@ func New(r userrepository.UserRepository) UserService {
 }
 
 func (s service) NewUser(username string, balance int64) (entity.User, error) {
+	if balance < 0 {
+		return entity.User{}, fmt.Errorf("Balance cant be negative")
+	}
 	id, err := s.repo.New(context.Background(), username, balance)
 	if err != nil {
 		return entity.User{}, err
@@ -55,6 +59,9 @@ func (s service) UserTake(id int64, points int64) (entity.User, error) {
 	user, err := s.repo.GetByID(context.Background(), id)
 	if err != nil {
 		return entity.User{}, err
+	}
+	if user.Balance < points {
+		return entity.User{}, fmt.Errorf("User doesnt have enough balance")
 	}
 	err = s.repo.UpdateByID(context.Background(), id, user.Username, user.Balance-points)
 	if err != nil {
