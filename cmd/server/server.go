@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/777777miSSU7777777/gaming-website/internal/api"
 	"github.com/777777miSSU7777777/gaming-website/pkg/repository/userrepository"
@@ -35,17 +36,22 @@ func init() {
 }
 
 func main() {
+	logger := log.New()
+	jsonFormatter := &log.JSONFormatter{}
+	jsonFormatter.TimestampFormat = "2006-01-02 15:04:05"
+	logger.SetFormatter(jsonFormatter)
+	logger.SetReportCaller(true)
+	logger.SetOutput(os.Stdout)
+
 	conString := fmt.Sprintf("%s:%s@/%s", dbuser, dbpass, dbname)
 	db, err := sql.Open("mysql", conString)
 	if err != nil {
-		log.Println(err)
+		logger.Fatalln(err)
 	}
-
 	defer db.Close()
 
 	userRepo := userrepository.New(db)
-
-	userSvc := userservice.New(userRepo)
+	userSvc := userservice.WrapLoggingMiddleware(userservice.New(userRepo), logger)
 
 	newUserhandler := api.MakeNewUserHandler(userSvc)
 	getUserHandler := api.MakeGetUserHandler(userSvc)
@@ -54,7 +60,6 @@ func main() {
 	userFundHandler := api.MakeUserFundHandler(userSvc)
 
 	router := mux.NewRouter()
-
 	router.Handle("/user", newUserhandler).Methods("POST")
 	router.Handle("/user/{id}", getUserHandler).Methods("GET")
 	router.Handle("/user/{id}", deleteUserHandler).Methods("DELETE")
@@ -62,12 +67,10 @@ func main() {
 	router.Handle("/user/{id}/fund", userFundHandler).Methods("POST")
 
 	http.Handle("/", router)
-
-	log.Println("Server started")
-
+	logger.Infoln("Server started")
 	addr := fmt.Sprintf("%s:%s", host, port)
 	err = http.ListenAndServe(addr, nil)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatalln(err)
 	}
 }
