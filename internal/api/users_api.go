@@ -8,7 +8,7 @@ import (
 )
 
 func MakeNewUserHandler(svc userservice.UserService) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request){
+	return func(rw http.ResponseWriter, r *http.Request) {
 		req, err := userservice.DecodeNewUser(context.Background(), r)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -27,7 +27,7 @@ func MakeNewUserHandler(svc userservice.UserService) http.HandlerFunc {
 }
 
 func MakeGetUserHandler(svc userservice.UserService) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request){
+	return func(rw http.ResponseWriter, r *http.Request) {
 		req, err := userservice.DecodeGetUser(context.Background(), r)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -46,7 +46,7 @@ func MakeGetUserHandler(svc userservice.UserService) http.HandlerFunc {
 }
 
 func MakeDeleteUserHandler(svc userservice.UserService) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request){
+	return func(rw http.ResponseWriter, r *http.Request) {
 		req, err := userservice.DecodeDeleteUser(context.Background(), r)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -64,9 +64,8 @@ func MakeDeleteUserHandler(svc userservice.UserService) http.HandlerFunc {
 	}
 }
 
-
 func MakeUserTakeHandler(svc userservice.UserService) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request){
+	return func(rw http.ResponseWriter, r *http.Request) {
 		req, err := userservice.DecodeUserTake(context.Background(), r)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -85,7 +84,7 @@ func MakeUserTakeHandler(svc userservice.UserService) http.HandlerFunc {
 }
 
 func MakeUserFundHandler(svc userservice.UserService) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request){
+	return func(rw http.ResponseWriter, r *http.Request) {
 		req, err := userservice.DecodeUserFund(context.Background(), r)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -102,6 +101,3 @@ func MakeUserFundHandler(svc userservice.UserService) http.HandlerFunc {
 		}
 	}
 }
-
-
-

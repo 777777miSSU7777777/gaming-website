@@ -2,14 +2,14 @@ package userservice
 
 import (
 	"context"
-	"net/http"
 	"encoding/json"
+	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
-func DecodeNewUser(_ context.Context, r *http.Request)(NewUserRequest, error){
+func DecodeNewUser(_ context.Context, r *http.Request) (NewUserRequest, error) {
 	req := NewUserRequest{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(req)
@@ -19,29 +19,29 @@ func DecodeNewUser(_ context.Context, r *http.Request)(NewUserRequest, error){
 	return req, nil
 }
 
-func DecodeGetUser(_ context.Context, r *http.Request)(GetUserRequest, error){
+func DecodeGetUser(_ context.Context, r *http.Request) (GetUserRequest, error) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
-	if err != nil{
+	if err != nil {
 		return GetUserRequest{}, err
 	}
 	return GetUserRequest{id}, nil
 }
 
-func DecodeDeleteUser(_ context.Context, r *http.Request)(DeleteUserRequest, error){
+func DecodeDeleteUser(_ context.Context, r *http.Request) (DeleteUserRequest, error) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
-	if err != nil{
+	if err != nil {
 		return DeleteUserRequest{}, err
 	}
 	return DeleteUserRequest{id}, nil
 }
 
-func DecodeUserTake(_ context.Context, r *http.Request)(UserTakeRequest, error){
+func DecodeUserTake(_ context.Context, r *http.Request) (UserTakeRequest, error) {
 	req := UserTakeRequest{}
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
-	if err != nil{
+	if err != nil {
 		return UserTakeRequest{}, err
 	}
 	req.ID = id
@@ -53,11 +53,11 @@ func DecodeUserTake(_ context.Context, r *http.Request)(UserTakeRequest, error){
 	return req, nil
 }
 
-func DecodeUserFund(_ context.Context, r *http.Request)(UserFundRequest, error){
+func DecodeUserFund(_ context.Context, r *http.Request) (UserFundRequest, error) {
 	req := UserFundRequest{}
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
-	if err != nil{
+	if err != nil {
 		return UserFundRequest{}, err
 	}
 	req.ID = id
