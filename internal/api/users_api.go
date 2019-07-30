@@ -14,16 +14,16 @@ func MakeNewUserHandler(svc userservice.UserService) http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		respVal, err := svc.NewUser(req.Name, req.Balance)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		err = userservice.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
-		} else {
-			rw.WriteHeader(http.StatusOK)
 		}
 	}
 }
@@ -35,16 +35,16 @@ func MakeGetUserHandler(svc userservice.UserService) http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		respVal, err := svc.GetUser(req.ID)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		err = userservice.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
-		} else {
-			rw.WriteHeader(http.StatusOK)
 		}
 	}
 }
@@ -56,16 +56,16 @@ func MakeDeleteUserHandler(svc userservice.UserService) http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		err = svc.DeleteUser(req.ID)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		err = userservice.EncodeResponse(context.Background(), rw, userservice.DeleteUserRequest{})
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
-		} else {
-			rw.WriteHeader(http.StatusOK)
 		}
 	}
 }
@@ -77,16 +77,16 @@ func MakeUserTakeHandler(svc userservice.UserService) http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		respVal, err := svc.UserTake(req.ID, req.Points)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		err = userservice.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
-		} else {
-			rw.WriteHeader(http.StatusOK)
 		}
 	}
 }
@@ -98,16 +98,16 @@ func MakeUserFundHandler(svc userservice.UserService) http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		respVal, err := svc.UserFund(req.ID, req.Points)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		err = userservice.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
-		} else {
-			rw.WriteHeader(http.StatusOK)
 		}
 	}
 }
