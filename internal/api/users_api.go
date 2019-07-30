@@ -51,11 +51,11 @@ func MakeDeleteUserHandler(svc userservice.UserService) http.HandlerFunc {
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 		}
-		respVal, err := svc.DeleteUser(req.ID)
+		err = svc.DeleteUser(req.ID)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 		}
-		err = userservice.EncodeResponse(context.Background(), rw, respVal)
+		err = userservice.EncodeResponse(context.Background(), rw, userservice.DeleteUserRequest{})
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 		} else {
