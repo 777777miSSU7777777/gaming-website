@@ -83,9 +83,6 @@ func (s service) UserFund(id int64, points int64) (entity.User, error) {
 	if err != nil {
 		return entity.User{}, err
 	}
-	user, err = s.repo.GetByID(context.Background(), id)
-	if err != nil {
-		return entity.User{}, err
-	}
+	user.Balance += points
 	return user, nil
 }
