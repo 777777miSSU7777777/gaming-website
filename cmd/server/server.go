@@ -36,7 +36,6 @@ func init() {
 
 func main() {
 	conString := fmt.Sprintf("%s:%s@/%s", dbuser, dbpass, dbname)
-	fmt.Println(conString)
 	db, err := sql.Open("mysql", conString)
 	if err != nil {
 		log.Println(err)
