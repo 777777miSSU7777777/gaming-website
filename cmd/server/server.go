@@ -53,11 +53,11 @@ func main() {
 	userRepo := userrepository.New(db)
 	userSvc := userservice.WrapLoggingMiddleware(userservice.New(userRepo), logger)
 
-	newUserhandler := api.MakeNewUserHandler(userSvc)
-	getUserHandler := api.MakeGetUserHandler(userSvc)
-	deleteUserHandler := api.MakeDeleteUserHandler(userSvc)
-	userTakeHandler := api.MakeUserTakeHandler(userSvc)
-	userFundHandler := api.MakeUserFundHandler(userSvc)
+	newUserhandler := api.MakeNewUserHandler(userSvc, logger)
+	getUserHandler := api.MakeGetUserHandler(userSvc, logger)
+	deleteUserHandler := api.MakeDeleteUserHandler(userSvc, logger)
+	userTakeHandler := api.MakeUserTakeHandler(userSvc, logger)
+	userFundHandler := api.MakeUserFundHandler(userSvc, logger)
 
 	router := mux.NewRouter()
 	router.Handle("/user", newUserhandler).Methods("POST")
