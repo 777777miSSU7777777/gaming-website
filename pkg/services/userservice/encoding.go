@@ -46,7 +46,7 @@ func DecodeUserTake(_ context.Context, r *http.Request) (UserTakeRequest, error)
 	}
 	req.ID = id
 	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(req)
+	err = decoder.Decode(&req)
 	if err != nil {
 		return UserTakeRequest{}, err
 	}
@@ -62,7 +62,7 @@ func DecodeUserFund(_ context.Context, r *http.Request) (UserFundRequest, error)
 	}
 	req.ID = id
 	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(req)
+	err = decoder.Decode(&req)
 	if err != nil {
 		return UserFundRequest{}, err
 	}
