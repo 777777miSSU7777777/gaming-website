@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/777777miSSU7777777/gaming-website/pkg/services"
 	"github.com/777777miSSU7777777/gaming-website/pkg/services/userservice"
 )
 
@@ -25,7 +26,7 @@ func MakeNewUserHandler(svc userservice.UserService, logger *log.Logger) http.Ha
 			return
 		}
 
-		err = userservice.EncodeResponse(context.Background(), rw, respVal)
+		err = services.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
@@ -49,7 +50,7 @@ func MakeGetUserHandler(svc userservice.UserService, logger *log.Logger) http.Ha
 			return
 		}
 
-		err = userservice.EncodeResponse(context.Background(), rw, respVal)
+		err = services.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
@@ -73,7 +74,7 @@ func MakeDeleteUserHandler(svc userservice.UserService, logger *log.Logger) http
 			return
 		}
 
-		err = userservice.EncodeResponse(context.Background(), rw, userservice.DeleteUserRequest{})
+		err = services.EncodeResponse(context.Background(), rw, userservice.DeleteUserRequest{})
 		if err != nil {
 			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
@@ -97,7 +98,7 @@ func MakeUserTakeHandler(svc userservice.UserService, logger *log.Logger) http.H
 			return
 		}
 
-		err = userservice.EncodeResponse(context.Background(), rw, respVal)
+		err = services.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
@@ -121,7 +122,7 @@ func MakeUserFundHandler(svc userservice.UserService, logger *log.Logger) http.H
 			return
 		}
 
-		err = userservice.EncodeResponse(context.Background(), rw, respVal)
+		err = services.EncodeResponse(context.Background(), rw, respVal)
 		if err != nil {
 			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)

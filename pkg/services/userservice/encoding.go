@@ -68,7 +68,3 @@ func DecodeUserFund(_ context.Context, r *http.Request) (UserFundRequest, error)
 	}
 	return req, nil
 }
-
-func EncodeResponse(_ context.Context, rw http.ResponseWriter, response interface{}) error {
-	return json.NewEncoder(rw).Encode(response)
-}
