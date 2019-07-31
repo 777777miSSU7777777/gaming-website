@@ -11,7 +11,7 @@ test: ;
 
 .PHONY: build
 build:
-	go build cmd/server/server.go
+	go build cmd/userservice/user_service.go
 
 .PHONY: run
 run: ;
