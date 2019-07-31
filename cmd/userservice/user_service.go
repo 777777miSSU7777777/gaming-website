@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -8,10 +9,9 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/777777miSSU7777777/gaming-website/internal/api"
+	"github.com/777777miSSU7777777/gaming-website/internal/api/userapi"
 	"github.com/777777miSSU7777777/gaming-website/pkg/repository/userrepository"
 	"github.com/777777miSSU7777777/gaming-website/pkg/services/userservice"
 )
@@ -52,24 +52,12 @@ func main() {
 
 	userRepo := userrepository.New(db)
 	userSvc := userservice.WrapLoggingMiddleware(userservice.New(userRepo), logger)
-
-	newUserhandler := api.MakeNewUserHandler(userSvc, logger)
-	getUserHandler := api.MakeGetUserHandler(userSvc, logger)
-	deleteUserHandler := api.MakeDeleteUserHandler(userSvc, logger)
-	userTakeHandler := api.MakeUserTakeHandler(userSvc, logger)
-	userFundHandler := api.MakeUserFundHandler(userSvc, logger)
-
-	router := mux.NewRouter()
-	router.Handle("/user", newUserhandler).Methods("POST")
-	router.Handle("/user/{id}", getUserHandler).Methods("GET")
-	router.Handle("/user/{id}", deleteUserHandler).Methods("DELETE")
-	router.Handle("/user/{id}/take", userTakeHandler).Methods("POST")
-	router.Handle("/user/{id}/fund", userFundHandler).Methods("POST")
-
-	http.Handle("/", router)
-	logger.Infoln("Server started")
+	ctx := context.Background()
 	addr := fmt.Sprintf("%s:%s", host, port)
-	err = http.ListenAndServe(addr, nil)
+
+	handler := userapi.NewHttpServer(ctx, userSvc, logger)
+	logger.Infof("Server started on %s", addr)
+	err = http.ListenAndServe(addr, handler)
 	if err != nil {
 		logger.Fatalln(err)
 	}
