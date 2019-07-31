@@ -38,6 +38,11 @@ func main() {
 	}
 	defer db.Close()
 
+	err = db.Ping()
+	if err != nil {
+		logger.Fatalln(err)
+	}
+
 	userRepo := userrepository.New(db)
 	userSvc := userservice.WrapLoggingMiddleware(userservice.New(userRepo), logger)
 	ctx := context.Background()
