@@ -19,6 +19,7 @@ import (
 var (
 	host   string
 	port   string
+	dbhost string
 	dbuser string
 	dbpass string
 	dbname string
@@ -29,9 +30,10 @@ func init() {
 	flag.StringVar(&host, "h", "0.0.0.0", "Defines host ip")
 	flag.StringVar(&port, "port", "8080", "Defines host port")
 	flag.StringVar(&port, "p", "8080", "Defines host port")
-	flag.StringVar(&dbuser, "user", "root", "Defines db user")
-	flag.StringVar(&dbpass, "pass", "", "Defines db user's password")
-	flag.StringVar(&dbname, "name", "GAMING_WEBSITE", "Defines db name")
+	flag.StringVar(&dbhost, "db_host", "mysql", "Defines db host")
+	flag.StringVar(&dbuser, "db_user", "root", "Defines db user")
+	flag.StringVar(&dbpass, "db_pass", "", "Defines db user's password")
+	flag.StringVar(&dbname, "db_name", "GAMING_WEBSITE", "Defines db name")
 	flag.Parse()
 }
 
@@ -44,7 +46,7 @@ func main() {
 	logger.SetOutput(os.Stdout)
 
 	conString := fmt.Sprintf("%s:%s@/%s", dbuser, dbpass, dbname)
-	db, err := sql.Open("mysql", conString)
+	db, err := sql.Open(dbhost, conString)
 	if err != nil {
 		logger.Fatalln(err)
 	}
