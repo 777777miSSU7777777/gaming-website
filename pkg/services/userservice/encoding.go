@@ -12,7 +12,7 @@ import (
 func DecodeNewUser(_ context.Context, r *http.Request) (NewUserRequest, error) {
 	req := NewUserRequest{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(req)
+	err := decoder.Decode(&req)
 	if err != nil {
 		return NewUserRequest{}, err
 	}
