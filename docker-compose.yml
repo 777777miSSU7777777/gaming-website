@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  user-service:
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: ./docker/userservice/Dockerfile
+    ports:
+      - 8080:8080
+    links:
+      - db
+    depends_on: 
+      - db
+    environment: 
+      CONNECTION_STRING: 'root:root1234@tcp(db:3306)/GAMING_WEBSITE'
+  
+  db:
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql
+    environment: 
+      MYSQL_HOST: '%'
+      MYSQL_ROOT_PASSWORD: 'root1234'
