@@ -28,10 +28,12 @@ func (r repository) New(ctx context.Context, username string, balance int64) (in
 	if err != nil {
 		return 0, err
 	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
+
 	return id, nil
 }
 
@@ -42,6 +44,7 @@ func (r repository) GetByID(ctx context.Context, id int64) (entity.User, error) 
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	return user, nil
 }
 
@@ -50,6 +53,7 @@ func (r repository) DeleteByID(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -58,5 +62,6 @@ func (r repository) UpdateByID(ctx context.Context, id int64, username string, b
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
