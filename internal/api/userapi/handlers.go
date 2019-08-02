@@ -21,7 +21,6 @@ func MakeNewUserHandler(svc userservice.UserService, logger *log.Logger) http.Ha
 
 		respVal, err := svc.NewUser(req.Name, req.Balance)
 		if err != nil {
-			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -45,7 +44,6 @@ func MakeGetUserHandler(svc userservice.UserService, logger *log.Logger) http.Ha
 
 		respVal, err := svc.GetUser(req.ID)
 		if err != nil {
-			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -69,7 +67,6 @@ func MakeDeleteUserHandler(svc userservice.UserService, logger *log.Logger) http
 
 		err = svc.DeleteUser(req.ID)
 		if err != nil {
-			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -93,7 +90,6 @@ func MakeUserTakeHandler(svc userservice.UserService, logger *log.Logger) http.H
 
 		respVal, err := svc.UserTake(req.ID, req.Points)
 		if err != nil {
-			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -117,7 +113,6 @@ func MakeUserFundHandler(svc userservice.UserService, logger *log.Logger) http.H
 
 		respVal, err := svc.UserFund(req.ID, req.Points)
 		if err != nil {
-			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
