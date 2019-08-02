@@ -28,14 +28,17 @@ func (s service) NewUser(username string, balance int64) (entity.User, error) {
 	if balance < 0 {
 		return entity.User{}, fmt.Errorf("Balance cant be negative")
 	}
+
 	id, err := s.repo.New(context.Background(), username, balance)
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	user, err := s.repo.GetByID(context.Background(), id)
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	return user, nil
 }
 
@@ -44,6 +47,7 @@ func (s service) GetUser(id int64) (entity.User, error) {
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	return user, nil
 }
 
@@ -52,6 +56,7 @@ func (s service) DeleteUser(id int64) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -60,17 +65,21 @@ func (s service) UserTake(id int64, points int64) (entity.User, error) {
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	if user.Balance < points {
 		return entity.User{}, fmt.Errorf("User doesnt have enough balance")
 	}
+
 	err = s.repo.UpdateByID(context.Background(), id, user.Username, user.Balance-points)
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	user, err = s.repo.GetByID(context.Background(), id)
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	return user, nil
 }
 
@@ -79,10 +88,12 @@ func (s service) UserFund(id int64, points int64) (entity.User, error) {
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	err = s.repo.UpdateByID(context.Background(), id, user.Username, user.Balance+points)
 	if err != nil {
 		return entity.User{}, err
 	}
+
 	user.Balance += points
 	return user, nil
 }
