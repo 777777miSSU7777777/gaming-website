@@ -1,4 +1,4 @@
-package userapi
+package api
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/pkg/services/userservice"
 )
 
-func NewHttpServer(ctx context.Context, svc userservice.UserService, logger *log.Logger) http.Handler {
+func NewHttpServer(svc userservice.UserService, logger *log.Logger) http.Handler {
 	r := mux.NewRouter()
 	r.Use(jsonTypeMiddleware)
 

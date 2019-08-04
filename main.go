@@ -10,16 +10,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/777777miSSU7777777/gaming-website/internal/api/userapi"
-	"github.com/777777miSSU7777777/gaming-website/pkg/repository/userrepository"
-	"github.com/777777miSSU7777777/gaming-website/pkg/services/userservice"
+	"github.com/777777miSSU7777777/gaming-website/api/"
+	"github.com/777777miSSU7777777/gaming-website/repository"
+	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
 func main() {
-	var (
-		listenAddr       string
-		connectionString string
-	)
+	var listenAddr       string
+	var connectionString string
 
 	flag.StringVar(&listenAddr, "listen_addr", ":8080", "Defines listen address")
 	flag.StringVar(&connectionString, "connection_string", "", "Defines connection string for MySQL")
@@ -29,8 +27,6 @@ func main() {
 	jsonFormatter := &log.JSONFormatter{}
 	jsonFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	logger.SetFormatter(jsonFormatter)
-	logger.SetReportCaller(true)
-	logger.SetOutput(os.Stdout)
 
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
@@ -43,7 +39,7 @@ func main() {
 		logger.Fatalln(err)
 	}
 
-	userRepo := userrepository.New(db)
+	userRepo := repository.New(db)
 	userSvc := userservice.WrapLoggingMiddleware(userservice.New(userRepo), logger)
 	ctx := context.Background()
 
