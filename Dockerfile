@@ -5,7 +5,7 @@ ENV GO111MODULE=on
 
 ADD . /src
 
-RUN cd /src && go build main.go -o service
+RUN cd /src && go build -o service main.go
 
 # Final stage 
 FROM ubuntu:18.04 AS runtime
