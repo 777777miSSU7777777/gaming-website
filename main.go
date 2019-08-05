@@ -10,7 +10,7 @@ import (
 
 	"github.com/777777miSSU7777777/gaming-website/api"
 	"github.com/777777miSSU7777777/gaming-website/repository"
-	service "github.com/777777miSSU7777777/gaming-website/service"
+	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
 func main() {
