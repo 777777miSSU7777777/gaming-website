@@ -25,6 +25,7 @@ func main() {
 	jsonFormatter := &log.JSONFormatter{}
 	jsonFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	logger.SetFormatter(jsonFormatter)
+	logger.SetReportCaller(true)
 
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
