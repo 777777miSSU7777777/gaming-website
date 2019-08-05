@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -43,9 +44,17 @@ func (r UserRepository) GetByID(ctx context.Context, id int64) (model.User, erro
 }
 
 func (r UserRepository) DeleteByID(ctx context.Context, id int64) error {
-	_, err := r.db.Exec("DELETE FROM USERS WHERE USER_ID=?", id)
+	res, err := r.db.Exec("DELETE FROM USERS WHERE USER_ID=?", id)
 	if err != nil {
 		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return errors.New("USER NOT FOUND ERROR")
 	}
 
 	return nil

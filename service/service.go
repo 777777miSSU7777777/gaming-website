@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/777777miSSU7777777/gaming-website/model"
 )
@@ -65,7 +65,7 @@ func (s service) DeleteUser(id int64) error {
 
 func (s service) UserTake(id int64, points int64) (model.User, error) {
 	if points <= 0 {
-		return model.User{}, fmt.Errorf("Cant take zero or negative points")
+		return model.User{}, errors.New("Can't take zero or negative points")
 	}
 
 	user, err := s.repo.GetByID(context.Background(), id)
@@ -74,7 +74,7 @@ func (s service) UserTake(id int64, points int64) (model.User, error) {
 	}
 
 	if points > user.Balance {
-		return model.User{}, fmt.Errorf("Balance isnt enough for taking points")
+		return model.User{}, errors.New("Balance isn't enough for taking points")
 	}
 
 	err = s.repo.TakeBalanceByID(context.Background(), id, points)
@@ -92,7 +92,7 @@ func (s service) UserTake(id int64, points int64) (model.User, error) {
 
 func (s service) UserFund(id int64, points int64) (model.User, error) {
 	if points <= 0 {
-		return model.User{}, fmt.Errorf("Cant fund zero or negative points")
+		return model.User{}, errors.New("Can't fund zero or negative points")
 	}
 
 	user, err := s.repo.GetByID(context.Background(), id)

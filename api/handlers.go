@@ -3,7 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -19,10 +19,10 @@ type ErrorResponse struct {
 	Err string `json:"error"`
 }
 
-var BodyParseError error = fmt.Errorf("BODY PARSE ERROR")
-var IDParseError error = fmt.Errorf("ID PARSE ERROR")
-var PointsParseError error = fmt.Errorf("POINTS PARSE ERROR")
-var UserNotFoundError error = fmt.Errorf("USER NOT FOUND ERROR")
+var BodyParseError error = errors.New("BODY PARSE ERROR")
+var IDParseError error = errors.New("ID PARSE ERROR")
+var PointsParseError error = errors.New("POINTS PARSE ERROR")
+var UserNotFoundError error = errors.New("USER NOT FOUND ERROR")
 
 func MakeNewUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -113,7 +113,7 @@ func MakeDeleteUserHandler(svc service.UserService, logger *log.Logger) http.Han
 		err = svc.DeleteUser(req.ID)
 		if err != nil {
 			logger.Error(err)
-			if err == sql.ErrNoRows {
+			if err.Error() == UserNotFoundError.Error() {
 				rw.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
 			} else {
