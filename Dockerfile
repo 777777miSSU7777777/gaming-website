@@ -5,7 +5,7 @@ ENV GO111MODULE=on
 
 ADD . /src
 
-RUN cd /src && go build -o service main.go
+RUN cd /src && go build main.go
 
 # Final stage 
 FROM ubuntu:18.04 AS runtime
@@ -14,6 +14,6 @@ EXPOSE 8080
 
 WORKDIR /app
 
-COPY --from=builder /src/service /app/
+COPY --from=builder /src/main /app/
 
-CMD ["sh", "-c", "./service -connection_string=$CONNECTION_STRING"]
+CMD ["sh", "-c", "./main -connection_string=$CONNECTION_STRING"]
