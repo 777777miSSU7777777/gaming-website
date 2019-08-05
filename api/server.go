@@ -1,16 +1,15 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/777777miSSU7777777/gaming-website/pkg/services/userservice"
+	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
-func NewHttpServer(svc userservice.UserService, logger *log.Logger) http.Handler {
+func NewHttpServer(svc service.UserService, logger *log.Logger) http.Handler {
 	r := mux.NewRouter()
 	r.Use(jsonTypeMiddleware)
 

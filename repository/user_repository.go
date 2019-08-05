@@ -1,4 +1,4 @@
-package userrepository
+package repository
 
 import (
 	"context"
@@ -8,8 +8,6 @@ import (
 
 	"github.com/777777miSSU7777777/gaming-website/model"
 )
-
-
 
 type UserRepository struct {
 	db *sql.DB
@@ -61,7 +59,7 @@ func (r UserRepository) TakeBalanceByID(ctx context.Context, id int64, points in
 		return err
 	}
 
-	_, err = r.db.Exec("UPDATE USERS SET BALANCE=? WHERE USER_ID=?", user.Balance - points, id)
+	_, err = r.db.Exec("UPDATE USERS SET BALANCE=? WHERE USER_ID=?", user.Balance-points, id)
 	if err != nil {
 		return err
 	}
@@ -76,7 +74,7 @@ func (r UserRepository) AddBalanceByID(ctx context.Context, id int64, points int
 	if err != nil {
 		return err
 	}
-	_, err = r.db.Exec("UPDATE USERS SET BALANCE=? WHERE USER_ID=?", user.Balance + points, id)
+	_, err = r.db.Exec("UPDATE USERS SET BALANCE=? WHERE USER_ID=?", user.Balance+points, id)
 	if err != nil {
 		return err
 	}

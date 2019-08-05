@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/777777miSSU7777777/gaming-website/model"
-	"context"
 	"net/http"
+	"strconv"
+
+	"github.com/777777miSSU7777777/gaming-website/model"
+	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
 
@@ -13,13 +15,12 @@ import (
 )
 
 type ErrorResponse struct {
-	Err error `json:"error"`
+	Err string `json:"error"`
 }
 
-const BodyParseError error = fmt.Errorf("BODY PARSE ERROR")
-const IDParseError error = fmt.Errorf("ID PARSE ERROR")
-const PointsParseError = fmt.Errorf("POINTS PARSE ERROR")
-
+var BodyParseError error = fmt.Errorf("BODY PARSE ERROR")
+var IDParseError error = fmt.Errorf("ID PARSE ERROR")
+var PointsParseError = fmt.Errorf("POINTS PARSE ERROR")
 
 func MakeNewUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
@@ -27,125 +28,170 @@ func MakeNewUserHandler(svc service.UserService, logger *log.Logger) http.Handle
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			logger.Error(BodyParseError)
-			json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError})
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
 			return
 		}
-		
-		u := model.User{Name: req.Name, req.Balance}
+
+		u := model.User{Username: req.Name, Balance: req.Balance}
 		err = u.Validate()
 		if err != nil {
 			logger.Error(err)
-			json.NewEncoder(rw).Encode(ErrorResponse{err})
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
 		logger.Debug(u)
 
-		resp, err := svc.NewUser(u.Name, u.Balance)
+		resp, err := svc.NewUser(u.Username, u.Balance)
 		if err != nil {
 			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
 
-		err := json.NewEncoder(rw).Encode(resp)
+		err = json.NewEncoder(rw).Encode(NewUserResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
 			logger.Error(err)
-			json.NewEncoder(rw).Encode(err)
 			rw.WriteHeader(http.StatusBadRequest)
-		} 
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+		}
 	}
 }
 
-func MakeGetUserHandler(svc userservice.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeGetUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req GetUserRequest
 		vars := mux.Vars(r)
 		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-
+			logger.Error(err)
+			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+			return
 		}
+		req.ID = id
 
 		resp, err := svc.GetUser(req.ID)
 		if err != nil {
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
 
-		err = services.EncodeResponse(context.Background(), rw, respVal)
+		err = json.NewEncoder(rw).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
-			logger.Warningln(err)
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
 	}
 }
 
-func MakeDeleteUserHandler(svc userservice.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeDeleteUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		req, err := userservice.DecodeDeleteUser(context.Background(), r)
+		var req DeleteUserRequest
+		vars := mux.Vars(r)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Warningln(err)
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
 			return
 		}
+		req.ID = id
 
 		err = svc.DeleteUser(req.ID)
 		if err != nil {
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
 
-		err = services.EncodeResponse(context.Background(), rw, userservice.DeleteUserRequest{})
+		err = json.NewEncoder(rw).Encode(DeleteUserRequest{})
 		if err != nil {
-			logger.Warningln(err)
+			logger.Error(ErrorResponse{err.Error()})
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
 	}
 }
 
-func MakeUserTakeHandler(svc userservice.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeUserTakeHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		req, err := userservice.DecodeUserTake(context.Background(), r)
+		var req UserTakeRequest
+		vars := mux.Vars(r)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Warningln(err)
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+			return
+		}
+		req.ID = id
+
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			logger.Error(BodyParseError)
+			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
 			return
 		}
 
-		respVal, err := svc.UserTake(req.ID, req.Points)
+		resp, err := svc.UserTake(req.ID, req.Points)
 		if err != nil {
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
 
-		err = services.EncodeResponse(context.Background(), rw, respVal)
+		err = json.NewEncoder(rw).Encode(UserTakeResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
-			logger.Warningln(err)
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
 	}
 }
 
-func MakeUserFundHandler(svc userservice.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeUserFundHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		req, err := userservice.DecodeUserFund(context.Background(), r)
+		var req UserFundRequest
+		vars := mux.Vars(r)
+		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Warningln(err)
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+			return
+		}
+		req.ID = id
+
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			logger.Error(BodyParseError)
+			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
 			return
 		}
 
-		respVal, err := svc.UserFund(req.ID, req.Points)
+		resp, err := svc.UserFund(req.ID, req.Points)
 		if err != nil {
+			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
 
-		err = services.EncodeResponse(context.Background(), rw, respVal)
+		err = json.NewEncoder(rw).Encode(UserFundResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
 			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
 	}
 }

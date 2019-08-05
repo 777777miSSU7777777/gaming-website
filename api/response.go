@@ -12,3 +12,5 @@ type DeleteUserResponse struct {
 }
 
 type UserTakeResponse NewUserResponse
+
+type UserFundResponse NewUserResponse
