@@ -38,7 +38,7 @@ func main() {
 		logger.Fatalln(err)
 	}
 
-	userRepo := repository.NewUserRepository(db)
+	userRepo := repository.New(db)
 	userSvc := service.New(userRepo)
 
 	handler := api.NewHttpServer(userSvc, logger)

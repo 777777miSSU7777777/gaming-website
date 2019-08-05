@@ -9,7 +9,7 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
-func NewHttpServer(svc service.UserService, logger *log.Logger) http.Handler {
+func NewHttpServer(svc service.Service, logger *log.Logger) http.Handler {
 	r := mux.NewRouter()
 	r.Use(jsonTypeMiddleware)
 

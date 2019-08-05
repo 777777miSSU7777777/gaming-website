@@ -7,7 +7,7 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/model"
 )
 
-type UserService interface {
+type Service interface {
 	NewUser(string, int64) (model.User, error)
 	GetUser(int64) (model.User, error)
 	DeleteUser(int64) error
@@ -15,38 +15,29 @@ type UserService interface {
 	UserFund(int64, int64) (model.User, error)
 }
 
-type UserRepository interface {
-	New(context.Context, string, int64) (int64, error)
-	GetByID(context.Context, int64) (model.User, error)
-	DeleteByID(context.Context, int64) error
-	TakeBalanceByID(context.Context, int64, int64) error
-	AddBalanceByID(context.Context, int64, int64) error
+type Repository interface {
+	NewUser(context.Context, string, int64) (int64, error)
+	GetUserByID(context.Context, int64) (model.User, error)
+	DeleteUserByID(context.Context, int64) error
+	TakeUserBalanceByID(context.Context, int64, int64) error
+	AddUserBalanceByID(context.Context, int64, int64) error
 }
 
-type service struct {
-	repo UserRepository
+type ServiceImpl struct {
+	repo Repository
 }
 
-func New(r UserRepository) UserService {
-	return &service{r}
+func New(r Repository) ServiceImpl {
+	return ServiceImpl{r}
 }
 
-func (s service) NewUser(username string, balance int64) (model.User, error) {
-	id, err := s.repo.New(context.Background(), username, balance)
+func (s ServiceImpl) NewUser(username string, balance int64) (model.User, error) {
+	id, err := s.repo.NewUser(context.Background(), username, balance)
 	if err != nil {
 		return model.User{}, err
 	}
 
-	user, err := s.repo.GetByID(context.Background(), id)
-	if err != nil {
-		return model.User{}, err
-	}
-
-	return user, nil
-}
-
-func (s service) GetUser(id int64) (model.User, error) {
-	user, err := s.repo.GetByID(context.Background(), id)
+	user, err := s.repo.GetUserByID(context.Background(), id)
 	if err != nil {
 		return model.User{}, err
 	}
@@ -54,8 +45,17 @@ func (s service) GetUser(id int64) (model.User, error) {
 	return user, nil
 }
 
-func (s service) DeleteUser(id int64) error {
-	err := s.repo.DeleteByID(context.Background(), id)
+func (s ServiceImpl) GetUser(id int64) (model.User, error) {
+	user, err := s.repo.GetUserByID(context.Background(), id)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return user, nil
+}
+
+func (s ServiceImpl) DeleteUser(id int64) error {
+	err := s.repo.DeleteUserByID(context.Background(), id)
 	if err != nil {
 		return err
 	}
@@ -63,12 +63,12 @@ func (s service) DeleteUser(id int64) error {
 	return nil
 }
 
-func (s service) UserTake(id int64, points int64) (model.User, error) {
+func (s ServiceImpl) UserTake(id int64, points int64) (model.User, error) {
 	if points <= 0 {
 		return model.User{}, errors.New("Can't take zero or negative points")
 	}
 
-	user, err := s.repo.GetByID(context.Background(), id)
+	user, err := s.repo.GetUserByID(context.Background(), id)
 	if err != nil {
 		return model.User{}, err
 	}
@@ -77,12 +77,12 @@ func (s service) UserTake(id int64, points int64) (model.User, error) {
 		return model.User{}, errors.New("Balance isn't enough for taking points")
 	}
 
-	err = s.repo.TakeBalanceByID(context.Background(), id, points)
+	err = s.repo.TakeUserBalanceByID(context.Background(), id, points)
 	if err != nil {
 		return model.User{}, err
 	}
 
-	user, err = s.repo.GetByID(context.Background(), id)
+	user, err = s.repo.GetUserByID(context.Background(), id)
 	if err != nil {
 		return model.User{}, err
 	}
@@ -90,17 +90,17 @@ func (s service) UserTake(id int64, points int64) (model.User, error) {
 	return user, nil
 }
 
-func (s service) UserFund(id int64, points int64) (model.User, error) {
+func (s ServiceImpl) UserFund(id int64, points int64) (model.User, error) {
 	if points <= 0 {
 		return model.User{}, errors.New("Can't fund zero or negative points")
 	}
 
-	user, err := s.repo.GetByID(context.Background(), id)
+	user, err := s.repo.GetUserByID(context.Background(), id)
 	if err != nil {
 		return model.User{}, err
 	}
 
-	err = s.repo.AddBalanceByID(context.Background(), id, points)
+	err = s.repo.AddUserBalanceByID(context.Background(), id, points)
 	if err != nil {
 		return model.User{}, err
 	}

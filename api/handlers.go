@@ -24,7 +24,7 @@ var IDParseError error = errors.New("ID PARSE ERROR")
 var PointsParseError error = errors.New("POINTS PARSE ERROR")
 var UserNotFoundError error = errors.New("USER NOT FOUND ERROR")
 
-func MakeNewUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeNewUserHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req NewUserRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
@@ -62,7 +62,7 @@ func MakeNewUserHandler(svc service.UserService, logger *log.Logger) http.Handle
 	}
 }
 
-func MakeGetUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeGetUserHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req GetUserRequest
 		vars := mux.Vars(r)
@@ -97,7 +97,7 @@ func MakeGetUserHandler(svc service.UserService, logger *log.Logger) http.Handle
 	}
 }
 
-func MakeDeleteUserHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeDeleteUserHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req DeleteUserRequest
 		vars := mux.Vars(r)
@@ -132,7 +132,7 @@ func MakeDeleteUserHandler(svc service.UserService, logger *log.Logger) http.Han
 	}
 }
 
-func MakeUserTakeHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req UserTakeRequest
 		vars := mux.Vars(r)
@@ -175,7 +175,7 @@ func MakeUserTakeHandler(svc service.UserService, logger *log.Logger) http.Handl
 	}
 }
 
-func MakeUserFundHandler(svc service.UserService, logger *log.Logger) http.HandlerFunc {
+func MakeUserFundHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req UserFundRequest
 		vars := mux.Vars(r)

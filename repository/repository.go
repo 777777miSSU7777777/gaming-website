@@ -10,15 +10,15 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/model"
 )
 
-type UserRepository struct {
+type Repository struct {
 	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return UserRepository{db}
+func New(db *sql.DB) Repository {
+	return Repository{db}
 }
 
-func (r UserRepository) New(ctx context.Context, username string, balance int64) (int64, error) {
+func (r Repository) NewUser(ctx context.Context, username string, balance int64) (int64, error) {
 	result, err := r.db.Exec("INSERT INTO USERS (USERNAME, BALANCE) VALUES(?, ?)", username, balance)
 	if err != nil {
 		return 0, err
@@ -32,7 +32,7 @@ func (r UserRepository) New(ctx context.Context, username string, balance int64)
 	return id, nil
 }
 
-func (r UserRepository) GetByID(ctx context.Context, id int64) (model.User, error) {
+func (r Repository) GetUserByID(ctx context.Context, id int64) (model.User, error) {
 	row := r.db.QueryRow("SELECT * FROM USERS WHERE USER_ID=?", id)
 	user := model.User{}
 	err := row.Scan(&user.ID, &user.Username, &user.Balance)
@@ -43,7 +43,7 @@ func (r UserRepository) GetByID(ctx context.Context, id int64) (model.User, erro
 	return user, nil
 }
 
-func (r UserRepository) DeleteByID(ctx context.Context, id int64) error {
+func (r Repository) DeleteUserByID(ctx context.Context, id int64) error {
 	res, err := r.db.Exec("DELETE FROM USERS WHERE USER_ID=?", id)
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (r UserRepository) DeleteByID(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r UserRepository) TakeBalanceByID(ctx context.Context, id int64, points int64) error {
+func (r Repository) TakeUserBalanceByID(ctx context.Context, id int64, points int64) error {
 	row := r.db.QueryRow("SELECT * FROM USERS WHERE USER_ID=?", id)
 	user := model.User{}
 	err := row.Scan(&user.ID, &user.Username, &user.Balance)
@@ -76,7 +76,7 @@ func (r UserRepository) TakeBalanceByID(ctx context.Context, id int64, points in
 	return nil
 }
 
-func (r UserRepository) AddBalanceByID(ctx context.Context, id int64, points int64) error {
+func (r Repository) AddUserBalanceByID(ctx context.Context, id int64, points int64) error {
 	row := r.db.QueryRow("SELECT * FROM USERS WHERE USER_ID=?", id)
 	user := model.User{}
 	err := row.Scan(&user.ID, &user.Username, &user.Balance)
