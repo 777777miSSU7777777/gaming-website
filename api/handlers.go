@@ -29,7 +29,6 @@ func MakeNewUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 		var req NewUserRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			logger.Error(BodyParseError)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
 			return
@@ -38,16 +37,13 @@ func MakeNewUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 		u := model.User{Username: req.Name, Balance: req.Balance}
 		err = u.Validate()
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
 		}
-		logger.Debug(u)
 
 		resp, err := svc.NewUser(u.Username, u.Balance)
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 			return
@@ -55,7 +51,6 @@ func MakeNewUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 
 		err = json.NewEncoder(rw).Encode(NewUserResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
@@ -68,7 +63,6 @@ func MakeGetUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 		vars := mux.Vars(r)
 		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
 			return
@@ -77,7 +71,6 @@ func MakeGetUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 
 		resp, err := svc.GetUser(req.ID)
 		if err != nil {
-			logger.Error(err)
 			if err == sql.ErrNoRows {
 				rw.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
@@ -90,7 +83,6 @@ func MakeGetUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 
 		err = json.NewEncoder(rw).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
@@ -103,7 +95,6 @@ func MakeDeleteUserHandler(svc service.Service, logger *log.Logger) http.Handler
 		vars := mux.Vars(r)
 		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
 			return
@@ -112,7 +103,6 @@ func MakeDeleteUserHandler(svc service.Service, logger *log.Logger) http.Handler
 
 		err = svc.DeleteUser(req.ID)
 		if err != nil {
-			logger.Error(err)
 			if err.Error() == UserNotFoundError.Error() {
 				rw.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
@@ -125,7 +115,6 @@ func MakeDeleteUserHandler(svc service.Service, logger *log.Logger) http.Handler
 
 		err = json.NewEncoder(rw).Encode(DeleteUserRequest{})
 		if err != nil {
-			logger.Error(ErrorResponse{err.Error()})
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
@@ -138,7 +127,6 @@ func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 		vars := mux.Vars(r)
 		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
 			return
@@ -147,7 +135,6 @@ func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 
 		err = json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			logger.Error(BodyParseError)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
 			return
@@ -155,7 +142,6 @@ func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 
 		resp, err := svc.UserTake(req.ID, req.Points)
 		if err != nil {
-			logger.Error(err)
 			if err == sql.ErrNoRows {
 				rw.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
@@ -168,7 +154,6 @@ func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 
 		err = json.NewEncoder(rw).Encode(UserTakeResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
@@ -181,7 +166,6 @@ func MakeUserFundHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 		vars := mux.Vars(r)
 		id, err := strconv.ParseInt(vars["id"], 10, 64)
 		if err != nil {
-			logger.Error(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
 			return
@@ -190,7 +174,6 @@ func MakeUserFundHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 
 		err = json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			logger.Error(BodyParseError)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
 			return
@@ -198,7 +181,6 @@ func MakeUserFundHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 
 		resp, err := svc.UserFund(req.ID, req.Points)
 		if err != nil {
-			logger.Error(err)
 			if err == sql.ErrNoRows {
 				rw.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
@@ -211,7 +193,6 @@ func MakeUserFundHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 
 		err = json.NewEncoder(rw).Encode(UserFundResponse{resp.ID, resp.Username, resp.Balance})
 		if err != nil {
-			logger.Warningln(err)
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
