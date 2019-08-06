@@ -10,8 +10,6 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/model"
 	"github.com/gorilla/mux"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
@@ -24,7 +22,7 @@ var IDParseError error = errors.New("ID PARSE ERROR")
 var PointsParseError error = errors.New("POINTS PARSE ERROR")
 var UserNotFoundError error = errors.New("USER NOT FOUND ERROR")
 
-func MakeNewUserHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
+func MakeNewUserHandler(svc service.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req NewUserRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
@@ -57,7 +55,7 @@ func MakeNewUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 	}
 }
 
-func MakeGetUserHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
+func MakeGetUserHandler(svc service.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req GetUserRequest
 		vars := mux.Vars(r)
@@ -89,7 +87,7 @@ func MakeGetUserHandler(svc service.Service, logger *log.Logger) http.HandlerFun
 	}
 }
 
-func MakeDeleteUserHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
+func MakeDeleteUserHandler(svc service.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req DeleteUserRequest
 		vars := mux.Vars(r)
@@ -121,7 +119,7 @@ func MakeDeleteUserHandler(svc service.Service, logger *log.Logger) http.Handler
 	}
 }
 
-func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
+func MakeUserTakeHandler(svc service.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req UserTakeRequest
 		vars := mux.Vars(r)
@@ -160,7 +158,7 @@ func MakeUserTakeHandler(svc service.Service, logger *log.Logger) http.HandlerFu
 	}
 }
 
-func MakeUserFundHandler(svc service.Service, logger *log.Logger) http.HandlerFunc {
+func MakeUserFundHandler(svc service.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req UserFundRequest
 		vars := mux.Vars(r)
