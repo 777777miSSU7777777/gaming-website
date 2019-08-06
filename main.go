@@ -38,10 +38,10 @@ func main() {
 		logger.Fatalln(err)
 	}
 
-	userRepo := repository.New(db)
-	userSvc := service.New(userRepo)
+	repo := repository.New(db)
+	svc := service.New(repo)
 
-	handler := api.NewHttpServer(userSvc)
+	handler := api.NewHttpServer(svc)
 	logger.Infof("Server started on %s", listenAddr)
 	err = http.ListenAndServe(listenAddr, handler)
 	if err != nil {
