@@ -18,8 +18,8 @@ func New(db *sql.DB) Repository {
 	return Repository{db}
 }
 
-func (r Repository) NewUser(ctx context.Context, username string, balance int64) (int64, error) {
-	result, err := r.db.Exec("INSERT INTO USERS (USERNAME, BALANCE) VALUES(?, ?)", username, balance)
+func (r Repository) NewUser(ctx context.Context, name string, balance int64) (int64, error) {
+	result, err := r.db.Exec("INSERT INTO USERS (USERNAME, BALANCE) VALUES(?, ?)", name, balance)
 	if err != nil {
 		return -1, err
 	}
@@ -89,5 +89,3 @@ func (r Repository) AddUserBalanceByID(ctx context.Context, id int64, points int
 	}
 	return nil
 }
-
-
