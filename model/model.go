@@ -29,6 +29,7 @@ type Tournament struct {
 	Deposit int64
 	Prize int64
 	Finished bool
+	Canceled bool
 }
 
 func (t Tournament) Validate() error {
