@@ -24,14 +24,14 @@ func (u User) Validate() error {
 }
 
 type Tournament struct {
-	ID int64
+	ID             int64
 	TournamentName string
-	Deposit int64
-	Prize int64
+	Deposit        int64
+	Prize          int64
 }
 
 func (t Tournament) Validate() error {
-	if t.TournamentName == "" && t.Deposit <= 0{
+	if t.TournamentName == "" && t.Deposit <= 0 {
 		return fmt.Errorf("Tournament name can't be empty and deposit can't be zero or negative")
 	}
 	if t.TournamentName == "" {
