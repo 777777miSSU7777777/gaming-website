@@ -7,14 +7,6 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/model"
 )
 
-type Service interface {
-	NewUser(string, int64) (model.User, error)
-	GetUser(int64) (model.User, error)
-	DeleteUser(int64) error
-	UserTake(int64, int64) (model.User, error)
-	UserFund(int64, int64) (model.User, error)
-}
-
 type Repository interface {
 	NewUser(context.Context, string, int64) (int64, error)
 	GetUserByID(context.Context, int64) (model.User, error)
@@ -23,15 +15,15 @@ type Repository interface {
 	AddUserBalanceByID(context.Context, int64, int64) error
 }
 
-type ServiceImpl struct {
+type Service struct {
 	repo Repository
 }
 
-func New(r Repository) ServiceImpl {
-	return ServiceImpl{r}
+func New(r Repository) Service {
+	return Service{r}
 }
 
-func (s ServiceImpl) NewUser(username string, balance int64) (model.User, error) {
+func (s Service) NewUser(username string, balance int64) (model.User, error) {
 	id, err := s.repo.NewUser(context.Background(), username, balance)
 	if err != nil {
 		return model.User{}, err
@@ -45,7 +37,7 @@ func (s ServiceImpl) NewUser(username string, balance int64) (model.User, error)
 	return user, nil
 }
 
-func (s ServiceImpl) GetUser(id int64) (model.User, error) {
+func (s Service) GetUser(id int64) (model.User, error) {
 	user, err := s.repo.GetUserByID(context.Background(), id)
 	if err != nil {
 		return model.User{}, err
@@ -54,7 +46,7 @@ func (s ServiceImpl) GetUser(id int64) (model.User, error) {
 	return user, nil
 }
 
-func (s ServiceImpl) DeleteUser(id int64) error {
+func (s Service) DeleteUser(id int64) error {
 	err := s.repo.DeleteUserByID(context.Background(), id)
 	if err != nil {
 		return err
@@ -63,7 +55,7 @@ func (s ServiceImpl) DeleteUser(id int64) error {
 	return nil
 }
 
-func (s ServiceImpl) UserTake(id int64, points int64) (model.User, error) {
+func (s Service) UserTake(id int64, points int64) (model.User, error) {
 	if points <= 0 {
 		return model.User{}, errors.New("Can't take zero or negative points")
 	}
@@ -90,7 +82,7 @@ func (s ServiceImpl) UserTake(id int64, points int64) (model.User, error) {
 	return user, nil
 }
 
-func (s ServiceImpl) UserFund(id int64, points int64) (model.User, error) {
+func (s Service) UserFund(id int64, points int64) (model.User, error) {
 	if points <= 0 {
 		return model.User{}, errors.New("Can't fund zero or negative points")
 	}

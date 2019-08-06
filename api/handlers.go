@@ -22,6 +22,14 @@ var IDParseError error = errors.New("ID PARSE ERROR")
 var PointsParseError error = errors.New("POINTS PARSE ERROR")
 var UserNotFoundError error = errors.New("USER NOT FOUND ERROR")
 
+type Service interface {
+	NewUser(string, int64) (model.User, error)
+	GetUser(int64) (model.User, error)
+	DeleteUser(int64) error
+	UserTake(int64, int64) (model.User, error)
+	UserFund(int64, int64) (model.User, error)
+}
+
 func MakeNewUserHandler(svc service.Service) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var req NewUserRequest
