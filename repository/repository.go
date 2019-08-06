@@ -21,12 +21,12 @@ func New(db *sql.DB) Repository {
 func (r Repository) NewUser(ctx context.Context, username string, balance int64) (int64, error) {
 	result, err := r.db.Exec("INSERT INTO USERS (USERNAME, BALANCE) VALUES(?, ?)", username, balance)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	return id, nil
@@ -89,3 +89,5 @@ func (r Repository) AddUserBalanceByID(ctx context.Context, id int64, points int
 	}
 	return nil
 }
+
+
