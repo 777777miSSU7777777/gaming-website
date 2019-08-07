@@ -26,6 +26,7 @@ func (u User) Validate() error {
 type Tournament struct {
 	ID             int64
 	TournamentName string
+	Status         string
 	Deposit        int64
 	Prize          int64
 	WinnerID       int64
