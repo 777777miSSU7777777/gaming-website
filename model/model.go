@@ -11,14 +11,11 @@ type User struct {
 }
 
 func (u User) Validate() error {
-	if u.Username == "" && u.Balance < 0 {
-		return fmt.Errorf("Username can't be empty and balance can't be negative")
-	}
 	if u.Username == "" {
-		return fmt.Errorf("Username can't be empty")
+		return fmt.Errorf("username is empty")
 	}
 	if u.Balance < 0 {
-		return fmt.Errorf("User balance can't be negative")
+		return fmt.Errorf("user balance is negative")
 	}
 	return nil
 }
@@ -33,14 +30,11 @@ type Tournament struct {
 }
 
 func (t Tournament) Validate() error {
-	if t.TournamentName == "" && t.Deposit <= 0 {
-		return fmt.Errorf("Tournament name can't be empty and deposit can't be zero or negative")
-	}
 	if t.TournamentName == "" {
-		return fmt.Errorf("Tournament name can't be empty")
+		return fmt.Errorf("tournament name is empty")
 	}
 	if t.Deposit <= 0 {
-		return fmt.Errorf("Tournament deposit can't be zero or negative")
+		return fmt.Errorf("tournament deposit is zero or negative")
 	}
 	return nil
 }

@@ -57,7 +57,7 @@ func (s Service) DeleteUser(id int64) error {
 
 func (s Service) UserTake(id int64, points int64) (model.User, error) {
 	if points <= 0 {
-		return model.User{}, errors.New("Can't take zero or negative points")
+		return model.User{}, errors.New("cant take zero or negative points")
 	}
 
 	user, err := s.repo.GetUserByID(context.Background(), id)
@@ -66,7 +66,7 @@ func (s Service) UserTake(id int64, points int64) (model.User, error) {
 	}
 
 	if points > user.Balance {
-		return model.User{}, errors.New("Balance isn't enough for taking points")
+		return model.User{}, errors.New("balance isnt enough for taking points")
 	}
 
 	err = s.repo.TakeUserBalanceByID(context.Background(), id, points)
@@ -84,7 +84,7 @@ func (s Service) UserTake(id int64, points int64) (model.User, error) {
 
 func (s Service) UserFund(id int64, points int64) (model.User, error) {
 	if points <= 0 {
-		return model.User{}, errors.New("Can't fund zero or negative points")
+		return model.User{}, errors.New("cant fund zero or negative points")
 	}
 
 	user, err := s.repo.GetUserByID(context.Background(), id)
