@@ -4,19 +4,17 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
-func NewHttpServer(svc service.Service) http.Handler {
+func NewHttpServer(api API) http.Handler {
 	r := mux.NewRouter()
 	r.Use(jsonTypeMiddleware)
 
-	r.Methods("POST").Path("/user").Handler(MakeNewUserHandler(svc))
-	r.Methods("GET").Path("/user/{id}").Handler(MakeGetUserHandler(svc))
-	r.Methods("DELETE").Path("/user/{id}").Handler(MakeDeleteUserHandler(svc))
-	r.Methods("POST").Path("/user/{id}/take").Handler(MakeUserTakeHandler(svc))
-	r.Methods("POST").Path("/user/{id}/fund").Handler(MakeUserFundHandler(svc))
+	r.Methods("POST").Path("/user").HandlerFunc(api.NewUser)
+	r.Methods("GET").Path("/user/{id}").HandlerFunc(api.GetUser)
+	r.Methods("DELETE").Path("/user/{id}").HandlerFunc(api.DeleteUser)
+	r.Methods("POST").Path("/user/{id}/take").HandlerFunc(api.UserTake)
+	r.Methods("POST").Path("/user/{id}/fund").HandlerFunc(api.UserFund)
 
 	return r
 }

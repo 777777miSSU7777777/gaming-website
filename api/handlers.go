@@ -9,8 +9,6 @@ import (
 
 	"github.com/777777miSSU7777777/gaming-website/model"
 	"github.com/gorilla/mux"
-
-	"github.com/777777miSSU7777777/gaming-website/service"
 )
 
 type ErrorResponse struct {
@@ -30,177 +28,175 @@ type Service interface {
 	UserFund(int64, int64) (model.User, error)
 }
 
-func MakeNewUserHandler(svc service.Service) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		var req NewUserRequest
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
-			return
-		}
+type API struct {
+	svc Service
+}
 
-		u := model.User{Username: req.Name, Balance: req.Balance}
-		err = u.Validate()
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-			return
-		}
+func New(svc Service) API {
+	return API{svc}
+}
 
-		resp, err := svc.NewUser(u.Username, u.Balance)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-			return
-		}
+func (a API) NewUser(rw http.ResponseWriter, r *http.Request) {
+	var req NewUserRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
+		return
+	}
 
-		err = json.NewEncoder(rw).Encode(NewUserResponse{resp.ID, resp.Username, resp.Balance})
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-		}
+	u := model.User{Username: req.Name, Balance: req.Balance}
+	err = u.Validate()
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+		return
+	}
+
+	resp, err := a.svc.NewUser(u.Username, u.Balance)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(NewUserResponse{resp.ID, resp.Username, resp.Balance})
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 	}
 }
 
-func MakeGetUserHandler(svc service.Service) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		var req GetUserRequest
-		vars := mux.Vars(r)
-		id, err := strconv.ParseInt(vars["id"], 10, 64)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
-			return
-		}
-		req.ID = id
-
-		resp, err := svc.GetUser(req.ID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				rw.WriteHeader(http.StatusNotFound)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
-			} else {
-				rw.WriteHeader(http.StatusBadRequest)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-			}
-			return
-		}
-
-		err = json.NewEncoder(rw).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-		}
+func (a API) GetUser(rw http.ResponseWriter, r *http.Request) {
+	var req GetUserRequest
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		return
 	}
-}
+	req.ID = id
 
-func MakeDeleteUserHandler(svc service.Service) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		var req DeleteUserRequest
-		vars := mux.Vars(r)
-		id, err := strconv.ParseInt(vars["id"], 10, 64)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
-			return
-		}
-		req.ID = id
-
-		err = svc.DeleteUser(req.ID)
-		if err != nil {
-			if err.Error() == UserNotFoundError.Error() {
-				rw.WriteHeader(http.StatusNotFound)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
-			} else {
-				rw.WriteHeader(http.StatusBadRequest)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-			}
-			return
-		}
-
-		err = json.NewEncoder(rw).Encode(DeleteUserRequest{})
-		if err != nil {
+	resp, err := a.svc.GetUser(req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			rw.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+		} else {
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 	}
 }
 
-func MakeUserTakeHandler(svc service.Service) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		var req UserTakeRequest
-		vars := mux.Vars(r)
-		id, err := strconv.ParseInt(vars["id"], 10, 64)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
-			return
-		}
-		req.ID = id
+func (a API) DeleteUser(rw http.ResponseWriter, r *http.Request) {
+	var req DeleteUserRequest
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		return
+	}
+	req.ID = id
 
-		err = json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
-			return
-		}
-
-		resp, err := svc.UserTake(req.ID, req.Points)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				rw.WriteHeader(http.StatusNotFound)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
-			} else {
-				rw.WriteHeader(http.StatusBadRequest)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-			}
-			return
-		}
-
-		err = json.NewEncoder(rw).Encode(UserTakeResponse{resp.ID, resp.Username, resp.Balance})
-		if err != nil {
+	err = a.svc.DeleteUser(req.ID)
+	if err != nil {
+		if err.Error() == UserNotFoundError.Error() {
+			rw.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+		} else {
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(DeleteUserRequest{})
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 	}
 }
 
-func MakeUserFundHandler(svc service.Service) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		var req UserFundRequest
-		vars := mux.Vars(r)
-		id, err := strconv.ParseInt(vars["id"], 10, 64)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
-			return
-		}
-		req.ID = id
+func (a API) UserTake(rw http.ResponseWriter, r *http.Request) {
+	var req UserTakeRequest
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		return
+	}
+	req.ID = id
 
-		err = json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
-			return
-		}
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
+		return
+	}
 
-		resp, err := svc.UserFund(req.ID, req.Points)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				rw.WriteHeader(http.StatusNotFound)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
-			} else {
-				rw.WriteHeader(http.StatusBadRequest)
-				_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-			}
-			return
-		}
-
-		err = json.NewEncoder(rw).Encode(UserFundResponse{resp.ID, resp.Username, resp.Balance})
-		if err != nil {
+	resp, err := a.svc.UserTake(req.ID, req.Points)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			rw.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+		} else {
 			rw.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 		}
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(UserTakeResponse{resp.ID, resp.Username, resp.Balance})
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+	}
+}
+
+func (a API) UserFund(rw http.ResponseWriter, r *http.Request) {
+	var req UserFundRequest
+	vars := mux.Vars(r)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		return
+	}
+	req.ID = id
+
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
+		return
+	}
+
+	resp, err := a.svc.UserFund(req.ID, req.Points)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			rw.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+		} else {
+			rw.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+		}
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(UserFundResponse{resp.ID, resp.Username, resp.Balance})
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
 	}
 }
