@@ -148,15 +148,15 @@ func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64,
 	return nil
 }
 
-func (r Repository) DeleteTournamentByID(ctx context.Context, id int64) error {
-	res, err := r.db.Exec("DELETE FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", id)
+func (r Repository) SetTournamentStatusByID(ctx context.Context, id int64, status string) error {
+	res, err := r.db.Exec("UPDATE TOURNAMENTS SET STATUS=? WHERE TOURNAMENT_ID=?", status, id)
 	if err != nil {
-		return fmt.Errorf("delete tournament error: %v", err)
+		return fmt.Errorf("set tournament status error: %v", err)
 	}
 
 	count, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("delete tournament error %v", err)
+		return fmt.Errorf("set tournament status error: %v", err)
 	}
 	if count == 0 {
 		return TournamentNotFoundError
