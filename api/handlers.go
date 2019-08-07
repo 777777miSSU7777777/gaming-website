@@ -3,7 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,13 +12,21 @@ import (
 )
 
 type ErrorResponse struct {
-	Err string `json:"error"`
+	Type  string `json:"type"`
+	Error string `json:"error"`
 }
 
-var BodyParseError error = errors.New("BODY PARSE ERROR")
-var IDParseError error = errors.New("ID PARSE ERROR")
-var PointsParseError error = errors.New("POINTS PARSE ERROR")
-var UserNotFoundError error = errors.New("USER NOT FOUND ERROR")
+var BodyParseError = "BODY PARSE ERROR"
+var IDParseError = "ID PARSE ERROR"
+var PointsParseError = "POINTS PARSE ERROR"
+var ValidationError = "VALIDATION ERROR"
+var NotFoundError = "NOT FOUND ERROR"
+var ServiceError = "SERVICE ERROR"
+
+func writeError(w http.ResponseWriter, statusCode int, errType string, err error) {
+	w.WriteHeader(statusCode)
+	_ = json.NewEncoder(w).Encode(ErrorResponse{Type: errType, Error: err.Error()})
+}
 
 type Service interface {
 	NewUser(string, int64) (model.User, error)
@@ -36,44 +44,36 @@ func New(svc Service) API {
 	return API{svc}
 }
 
-func (a API) NewUser(rw http.ResponseWriter, r *http.Request) {
+func (a API) NewUser(w http.ResponseWriter, r *http.Request) {
 	var req NewUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
+		writeError(w, 400, BodyParseError, fmt.Errorf("error while parsing body: %v", err))
 		return
 	}
 
 	u := model.User{Username: req.Name, Balance: req.Balance}
 	err = u.Validate()
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+		writeError(w, 400, ValidationError, fmt.Errorf("user validation error: %v", err))
 		return
 	}
 
 	resp, err := a.svc.NewUser(u.Username, u.Balance)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+		writeError(w, 400, ServiceError, fmt.Errorf("error while adding user: %v", err))
 		return
 	}
 
-	err = json.NewEncoder(rw).Encode(NewUserResponse{resp.ID, resp.Username, resp.Balance})
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-	}
+	_ = json.NewEncoder(w).Encode(NewUserResponse{resp.ID, resp.Username, resp.Balance})
 }
 
-func (a API) GetUser(rw http.ResponseWriter, r *http.Request) {
+func (a API) GetUser(w http.ResponseWriter, r *http.Request) {
 	var req GetUserRequest
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		writeError(w, 400, IDParseError, fmt.Errorf("error while parsing id: %v", err))
 		return
 	}
 	req.ID = id
@@ -81,122 +81,94 @@ func (a API) GetUser(rw http.ResponseWriter, r *http.Request) {
 	resp, err := a.svc.GetUser(req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			rw.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+			writeError(w, 404, NotFoundError, fmt.Errorf("user not found error: %v", err))
 		} else {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+			writeError(w, 400, ServiceError, fmt.Errorf("error while getting user: %v", err))
 		}
 		return
 	}
 
-	err = json.NewEncoder(rw).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-	}
+	err = json.NewEncoder(w).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
 }
 
-func (a API) DeleteUser(rw http.ResponseWriter, r *http.Request) {
+func (a API) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var req DeleteUserRequest
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		writeError(w, 400, IDParseError, fmt.Errorf("error while parsing id: %v", err))
 		return
 	}
 	req.ID = id
 
 	err = a.svc.DeleteUser(req.ID)
 	if err != nil {
-		if err.Error() == UserNotFoundError.Error() {
-			rw.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+		if err.Error() == "user not found error" {
+			writeError(w, 404, NotFoundError, fmt.Errorf("user not found error"))
+			return
 		} else {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+			writeError(w, 400, ServiceError, fmt.Errorf("error while deleting user: %v", err))
 		}
 		return
 	}
 
-	err = json.NewEncoder(rw).Encode(DeleteUserRequest{})
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-	}
+	_ = json.NewEncoder(w).Encode(DeleteUserRequest{})
 }
 
-func (a API) UserTake(rw http.ResponseWriter, r *http.Request) {
+func (a API) UserTake(w http.ResponseWriter, r *http.Request) {
 	var req UserTakeRequest
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		writeError(w, 400, IDParseError, fmt.Errorf("error while parsing id: %v", err))
 		return
 	}
 	req.ID = id
 
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
+		writeError(w, 400, BodyParseError, fmt.Errorf("error while parsing body: %v", err))
 		return
 	}
 
 	resp, err := a.svc.UserTake(req.ID, req.Points)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			rw.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+			writeError(w, 404, NotFoundError, fmt.Errorf("user not found error: %v", err))
 		} else {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+			writeError(w, 400, ServiceError, fmt.Errorf("error while taking user balance: %v", err))
 		}
 		return
 	}
 
-	err = json.NewEncoder(rw).Encode(UserTakeResponse{resp.ID, resp.Username, resp.Balance})
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-	}
+	_ = json.NewEncoder(w).Encode(UserTakeResponse{resp.ID, resp.Username, resp.Balance})
 }
 
-func (a API) UserFund(rw http.ResponseWriter, r *http.Request) {
+func (a API) UserFund(w http.ResponseWriter, r *http.Request) {
 	var req UserFundRequest
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{IDParseError.Error()})
+		writeError(w, 400, IDParseError, fmt.Errorf("error while parsing id: %v", err))
 		return
 	}
 	req.ID = id
 
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{BodyParseError.Error()})
+		writeError(w, 400, BodyParseError, fmt.Errorf("error while parsing body: %v", err))
 		return
 	}
 
 	resp, err := a.svc.UserFund(req.ID, req.Points)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			rw.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{UserNotFoundError.Error()})
+			writeError(w, 404, NotFoundError, fmt.Errorf("user not found error: %v", err))
 		} else {
-			rw.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
+			writeError(w, 400, ServiceError, fmt.Errorf("error while adding user balance: %v", err))
 		}
 		return
 	}
 
-	err = json.NewEncoder(rw).Encode(UserFundResponse{resp.ID, resp.Username, resp.Balance})
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(rw).Encode(ErrorResponse{err.Error()})
-	}
+	_ = json.NewEncoder(w).Encode(UserFundResponse{resp.ID, resp.Username, resp.Balance})
 }
