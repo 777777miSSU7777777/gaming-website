@@ -11,12 +11,11 @@ test: ;
 
 .PHONY: build
 build:
-	go build cmd/userservice/user_service.go
+	go build
 
 .PHONY: run
 run: 
-	sudo docker-compose build
-	sudo docker-compose up
+	sudo docker-compose up --build
 
 .PHONY: docker
 docker: ;
