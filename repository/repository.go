@@ -164,3 +164,17 @@ func (r Repository) SetTournamentStatusByID(ctx context.Context, id int64, statu
 
 	return nil
 }
+
+func (r Repository) SetTournamentWinner(ctx context.Context, tournamentID int64, winnerID int64) error {
+	_, err := r.db.Query("SELECT * FROM MTM_USER_TOURNAMENT WHERE TOURNAMENT_ID=? AND USER_ID=?", tournamentID, winnerID)
+	if err == sql.ErrNoRows {
+		fmt.Errorf("user or tournament not found error: %v", err)
+	}
+
+	_, err = r.db.Exec("UPDATE TOURNAMENTS SET WINNER_ID=? WHERE TOURNAMENT_ID=?", winnerID, tournamentID)
+	if err != nil {
+		return fmt.Errorf("set tournament winner error: %v", err)
+	}
+
+	return nil
+}
