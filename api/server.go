@@ -16,6 +16,12 @@ func NewHttpServer(api API) http.Handler {
 	r.Methods("POST").Path("/user/{id}/take").HandlerFunc(api.UserTake)
 	r.Methods("POST").Path("/user/{id}/fund").HandlerFunc(api.UserFund)
 
+	r.Methods("POST").Path("/tournament").HandlerFunc(api.NewTournament)
+	r.Methods("GET").Path("/tournament/{id}").HandlerFunc(api.GetTournament)
+	r.Methods("POST").Path("/tournament/{id}/join").HandlerFunc(api.JoinTournament)
+	r.Methods("POST").Path("/tournament/{id}/finish").HandlerFunc(api.FinishTournament)
+	r.Methods("DELETE").Path("/tournament/{id}").HandlerFunc(api.CancelTournament)
+
 	return r
 }
 

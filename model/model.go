@@ -38,3 +38,9 @@ func (t Tournament) Validate() error {
 	}
 	return nil
 }
+
+type MTMUserTournament struct {
+	ID           int64
+	TournamentID int64
+	UserID       int64
+}

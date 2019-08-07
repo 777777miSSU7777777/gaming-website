@@ -148,6 +148,23 @@ func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64,
 	return nil
 }
 
+func (r Repository) IncreaseTournamentPrize(ctx context.Context, id int64, points int64) error {
+	res, err := r.db.Exec("UPDATE TOURNAMENTS SET PRIZE=PRIZE + ?", points)
+	if err != nil {
+		return fmt.Errorf("increase prize error: %v", err)
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("increase prize error: %v", err)
+	}
+	if count == 0 {
+		return TournamentNotFoundError
+	}
+
+	return nil
+}
+
 func (r Repository) SetTournamentStatusByID(ctx context.Context, id int64, status string) error {
 	res, err := r.db.Exec("UPDATE TOURNAMENTS SET TOURNAMENT_STATUS=? WHERE TOURNAMENT_ID=?", status, id)
 	if err != nil {
@@ -177,4 +194,39 @@ func (r Repository) SetTournamentWinner(ctx context.Context, tournamentID int64,
 	}
 
 	return nil
+}
+
+func (r Repository) GetTournamentUsers(ctx context.Context, id int64) ([]model.User, error) {
+	_, err := r.db.Query("SELECT * FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", id)
+	if err == sql.ErrNoRows {
+		return nil, TournamentNotFoundError
+	}
+
+	var count int
+	row := r.db.QueryRow("SELECT COUNT(*) USERS AS u RIGHT JOIN MTM_USER_TOURNAMENT AS m ON u.USER_ID = m.USER_ID WHERE m.TOURNAMENT_ID = ?", id)
+	err = row.Scan(&count)
+	if err != nil {
+		return nil, fmt.Errorf("error while getting count of users: %v", err)
+	}
+	if count == 0 {
+		return nil, errors.New("users not found error")
+	}
+
+	rows, err := r.db.Query("SELECT * FROM USERS AS u RIGHT JOIN MTM_USER_TOURNAMENT AS m ON u.USER_ID = m.USER_ID WHERE m.TOURNAMENT_ID = ?", id)
+	if err != nil {
+		return nil, fmt.Errorf("error while getting users: %v", err)
+	}
+	defer rows.Close()
+
+	users := make([]model.User, 0, count)
+	for rows.Next() {
+		user := model.User{}
+		err := rows.Scan(&user.ID, &user.Username, &user.Balance)
+		if err != nil {
+			return nil, fmt.Errorf("error while scanning users: %v", err)
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }

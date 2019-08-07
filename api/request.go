@@ -17,3 +17,25 @@ type UserTakeRequest struct {
 }
 
 type UserFundRequest UserTakeRequest
+
+type NewTournamentRequest struct {
+	Name    string `json:"name"`
+	Deposit int64  `json:"deposit"`
+}
+
+type GetTournamentRequest struct {
+	ID int64
+}
+
+type JoinTournamentRequest struct {
+	TournamentID int64
+	UserID       int64 `json:"userId"`
+}
+
+type FinishTournamentRequest struct {
+	ID int64
+}
+
+type CancelTournamentRequest struct {
+	ID int64
+}
