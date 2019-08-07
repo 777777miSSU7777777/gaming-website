@@ -125,9 +125,17 @@ func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64,
 }
 
 func (r Repository) DeleteTournamentByID(ctx context.Context, id int64) error {
-	_, err := r.db.Exec("DELETE FROM TOURNAMENTS WHERE ID=?", id)
+	res, err := r.db.Exec("DELETE FROM TOURNAMENTS WHERE ID=?", id)
 	if err != nil {
 		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return errors.New("TOURNAMENT NOT FOUND ERROR")
 	}
 
 	return nil
