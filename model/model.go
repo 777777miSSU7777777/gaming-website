@@ -28,6 +28,7 @@ type Tournament struct {
 	TournamentName string
 	Deposit        int64
 	Prize          int64
+	WinnerID       int64
 }
 
 func (t Tournament) Validate() error {
