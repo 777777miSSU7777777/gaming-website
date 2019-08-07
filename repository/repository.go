@@ -118,7 +118,7 @@ func (r Repository) NewTournament(ctx context.Context, name string, deposit int6
 func (r Repository) GetTournamentByID(ctx context.Context, id int64) (model.Tournament, error) {
 	row := r.db.QueryRow("SELECT * FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", id)
 	tournament := model.Tournament{}
-	err := row.Scan(&tournament.ID, &tournament.TournamentName, &tournament.Deposit, &tournament.Prize)
+	err := row.Scan(&tournament.ID, &tournament.TournamentName, &tournament.Status, &tournament.Deposit, &tournament.Prize, &tournament.WinnerID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return model.Tournament{}, TournamentNotFoundError
@@ -149,7 +149,7 @@ func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64,
 }
 
 func (r Repository) SetTournamentStatusByID(ctx context.Context, id int64, status string) error {
-	res, err := r.db.Exec("UPDATE TOURNAMENTS SET STATUS=? WHERE TOURNAMENT_ID=?", status, id)
+	res, err := r.db.Exec("UPDATE TOURNAMENTS SET TOURNAMENT_STATUS=? WHERE TOURNAMENT_ID=?", status, id)
 	if err != nil {
 		return fmt.Errorf("set tournament status error: %v", err)
 	}
