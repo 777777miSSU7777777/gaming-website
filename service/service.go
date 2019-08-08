@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"math/rand"
 	"time"
@@ -10,6 +11,8 @@ import (
 )
 
 type Repository interface {
+	StartTx() (*sql.Tx, error)
+	Commit(*sql.Tx) error
 	NewUser(context.Context, string, int64) (int64, error)
 	GetUserByID(context.Context, int64) (model.User, error)
 	DeleteUserByID(context.Context, int64) error
@@ -162,6 +165,11 @@ func (s Service) JoinTournament(tournamentID int64, userID int64) (model.Tournam
 		return model.Tournament{}, nil, err
 	}
 
+	tx, err := s.repo.StartTx()
+	if err != nil {
+		return model.Tournament{}, nil, err
+	}
+
 	if user.Balance < tournament.Deposit {
 		return model.Tournament{}, nil, errors.New("user balance isnt enough to join tournament")
 	}
@@ -177,6 +185,11 @@ func (s Service) JoinTournament(tournamentID int64, userID int64) (model.Tournam
 	}
 
 	err = s.repo.TakeUserBalanceByID(context.Background(), userID, tournament.Deposit)
+	if err != nil {
+		return model.Tournament{}, nil, err
+	}
+
+	err = s.repo.Commit(tx)
 	if err != nil {
 		return model.Tournament{}, nil, err
 	}
@@ -225,6 +238,11 @@ func (s Service) FinishTournament(id int64) (model.Tournament, []model.User, err
 	i := random.Intn(len(users))
 	winnerID := users[i].ID
 
+	tx, err := s.repo.StartTx()
+	if err != nil {
+		return model.Tournament{}, nil, err
+	}
+
 	err = s.repo.SetTournamentStatusByID(context.Background(), id, "Finished")
 	if err != nil {
 		return model.Tournament{}, nil, err
@@ -236,6 +254,11 @@ func (s Service) FinishTournament(id int64) (model.Tournament, []model.User, err
 	}
 
 	err = s.repo.AddUserBalanceByID(context.Background(), winnerID, tournament.Prize)
+	if err != nil {
+		return model.Tournament{}, nil, err
+	}
+
+	err = s.repo.Commit(tx)
 	if err != nil {
 		return model.Tournament{}, nil, err
 	}
@@ -259,6 +282,11 @@ func (s Service) CancelTournament(id int64) error {
 		return err
 	}
 
+	tx, err := s.repo.StartTx()
+	if err != nil {
+		return err
+	}
+
 	err = s.repo.SetTournamentStatusByID(context.Background(), id, "Canceled")
 	if err != nil {
 		return err
@@ -274,6 +302,11 @@ func (s Service) CancelTournament(id int64) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err = s.repo.Commit(tx)
+	if err != nil {
+		return err
 	}
 
 	return nil
