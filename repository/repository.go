@@ -22,6 +22,24 @@ func New(db *sql.DB) Repository {
 	return Repository{db}
 }
 
+func (r Repository) StartTx() (*sql.Tx, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("sql transaction error: %v", err)
+	}
+
+	return tx, nil
+}
+
+func (r Repository) Commit(tx *sql.Tx) error {
+	err := tx.Commit()
+	if err != nil {
+		return fmt.Errorf("sql transaction commit error: %v", err)
+	}
+
+	return nil
+}
+
 func (r Repository) NewUser(ctx context.Context, name string, balance int64) (int64, error) {
 	result, err := r.db.Exec("INSERT INTO USERS (USERNAME, BALANCE) VALUES(?, ?)", name, balance)
 	if err != nil {
