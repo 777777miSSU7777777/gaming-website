@@ -158,6 +158,11 @@ func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64,
 		return UserNotFoundError
 	}
 
+	_, err = r.db.Query("SELECT * FROM MTM_USER_TOURNAMENT WHERE TOURNAMENT_ID=? AND USER_ID=?", tournamentID, userID)
+	if err != sql.ErrNoRows {
+		return fmt.Errorf("user already joined this tournament error")
+	}
+
 	_, err = r.db.Exec("INSERT INTO MTM_USER_TOURNAMENT(TOURNAMENT_ID, USER_ID) VALUES (?,?)", tournamentID, userID)
 	if err != nil {
 		return fmt.Errorf("add user to tournament error: %v", err)
