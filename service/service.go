@@ -146,18 +146,25 @@ func (s Service) GetTournament(id int64) (model.Tournament, []model.User, error)
 	return tournament, users, nil
 }
 
+func checkTournamentStatus(t model.Tournament) error {
+	if t.Status == "Finished" {
+		return TournamentFinishedError
+	}
+	if t.Status == "Canceled" {
+		return TournamentCanceledError
+	}
+	return nil
+}
+
 func (s Service) JoinTournament(tournamentID int64, userID int64) (model.Tournament, []model.User, error) {
 	tournament, err := s.repo.GetTournamentByID(context.Background(), tournamentID)
 	if err != nil {
 		return model.Tournament{}, nil, err
 	}
 
-	if tournament.Status == "Finished" {
-		return model.Tournament{}, nil, TournamentFinishedError
-	}
-
-	if tournament.Status == "Canceled" {
-		return model.Tournament{}, nil, TournamentCanceledError
+	err = checkTournamentStatus(tournament)
+	if err != nil {
+		return model.Tournament{}, nil, err
 	}
 
 	user, err := s.repo.GetUserByID(context.Background(), userID)
@@ -205,16 +212,6 @@ func (s Service) JoinTournament(tournamentID int64, userID int64) (model.Tournam
 	}
 
 	return tournament, users, nil
-}
-
-func checkTournamentStatus(t model.Tournament) error {
-	if t.Status == "Finished" {
-		return TournamentFinishedError
-	}
-	if t.Status == "Canceled" {
-		return TournamentCanceledError
-	}
-	return nil
 }
 
 func (s Service) FinishTournament(id int64) (model.Tournament, []model.User, error) {
