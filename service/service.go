@@ -132,7 +132,9 @@ func (s Service) GetTournament(id int64) (model.Tournament, []model.User, error)
 
 	users, err := s.repo.GetTournamentUsers(context.Background(), id)
 	if err != nil {
-		return model.Tournament{}, nil, err
+		if err.Error() != "users not found error" {
+			return model.Tournament{}, nil, err
+		}
 	}
 
 	return tournament, users, nil
