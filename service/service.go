@@ -28,6 +28,9 @@ type Service struct {
 	repo Repository
 }
 
+var TournamentFinishedError = errors.New("tournament already finished")
+var TournamentCanceledError = errors.New("tournament already canceled")
+
 func New(r Repository) Service {
 	return Service{r}
 }
@@ -146,6 +149,14 @@ func (s Service) JoinTournament(tournamentID int64, userID int64) (model.Tournam
 		return model.Tournament{}, nil, err
 	}
 
+	if tournament.Status == "Finished" {
+		return model.Tournament{}, nil, TournamentFinishedError
+	}
+
+	if tournament.Status == "Canceled" {
+		return model.Tournament{}, nil, TournamentCanceledError
+	}
+
 	user, err := s.repo.GetUserByID(context.Background(), userID)
 	if err != nil {
 		return model.Tournament{}, nil, err
@@ -189,6 +200,14 @@ func (s Service) FinishTournament(id int64) (model.Tournament, []model.User, err
 		return model.Tournament{}, nil, err
 	}
 
+	if tournament.Status == "Finished" {
+		return model.Tournament{}, nil, TournamentFinishedError
+	}
+
+	if tournament.Status == "Canceled" {
+		return model.Tournament{}, nil, TournamentCanceledError
+	}
+
 	users, err := s.repo.GetTournamentUsers(context.Background(), id)
 	if err != nil {
 		return model.Tournament{}, nil, err
@@ -226,6 +245,14 @@ func (s Service) CancelTournament(id int64) error {
 	tournament, err := s.repo.GetTournamentByID(context.Background(), id)
 	if err != nil {
 		return err
+	}
+
+	if tournament.Status == "Finished" {
+		return TournamentFinishedError
+	}
+
+	if tournament.Status == "Canceled" {
+		return TournamentCanceledError
 	}
 
 	err = s.repo.SetTournamentStatusByID(context.Background(), id, "Canceled")
