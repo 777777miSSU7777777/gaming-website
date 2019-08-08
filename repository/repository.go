@@ -149,7 +149,7 @@ func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64,
 }
 
 func (r Repository) IncreaseTournamentPrize(ctx context.Context, id int64, points int64) error {
-	res, err := r.db.Exec("UPDATE TOURNAMENTS SET PRIZE=PRIZE + ?", points)
+	res, err := r.db.Exec("UPDATE TOURNAMENTS SET PRIZE=PRIZE + ? WHERE TOURNAMENT_ID=?", points, id)
 	if err != nil {
 		return fmt.Errorf("increase prize error: %v", err)
 	}
@@ -203,7 +203,7 @@ func (r Repository) GetTournamentUsers(ctx context.Context, id int64) ([]model.U
 	}
 
 	var count int
-	row := r.db.QueryRow("SELECT COUNT(*) USERS AS u RIGHT JOIN MTM_USER_TOURNAMENT AS m ON u.USER_ID = m.USER_ID WHERE m.TOURNAMENT_ID = ?", id)
+	row := r.db.QueryRow("SELECT COUNT(*) FROM USERS AS t1 JOIN MTM_USER_TOURNAMENT AS t2 ON t1.USER_ID = t2.USER_ID WHERE t2.TOURNAMENT_ID = ?", id)
 	err = row.Scan(&count)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting count of users: %v", err)
@@ -212,7 +212,7 @@ func (r Repository) GetTournamentUsers(ctx context.Context, id int64) ([]model.U
 		return nil, errors.New("users not found error")
 	}
 
-	rows, err := r.db.Query("SELECT * FROM USERS AS u RIGHT JOIN MTM_USER_TOURNAMENT AS m ON u.USER_ID = m.USER_ID WHERE m.TOURNAMENT_ID = ?", id)
+	rows, err := r.db.Query("SELECT t1.* FROM USERS AS t1 JOIN MTM_USER_TOURNAMENT AS t2 ON t1.USER_ID = t2.USER_ID WHERE t2.TOURNAMENT_ID = ?", id)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting users: %v", err)
 	}
