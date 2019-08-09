@@ -22,24 +22,6 @@ func New(db *sql.DB) Repository {
 	return Repository{db}
 }
 
-func (r Repository) StartTx() (*sql.Tx, error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("sql transaction error: %v", err)
-	}
-
-	return tx, nil
-}
-
-func (r Repository) Commit(tx *sql.Tx) error {
-	err := tx.Commit()
-	if err != nil {
-		return fmt.Errorf("sql transaction commit error: %v", err)
-	}
-
-	return nil
-}
-
 func (r Repository) NewUser(ctx context.Context, name string, balance int64) (int64, error) {
 	result, err := r.db.Exec("INSERT INTO USERS (USERNAME, BALANCE) VALUES(?, ?)", name, balance)
 	if err != nil {
@@ -147,75 +129,105 @@ func (r Repository) GetTournamentByID(ctx context.Context, id int64) (model.Tour
 	return tournament, nil
 }
 
-func (r Repository) AddUserToTournament(ctx context.Context, tournamentID int64, userID int64) error {
-	_, err := r.db.Query("SELECT * FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", tournamentID)
-	if err == sql.ErrNoRows {
-		return TournamentNotFoundError
-	}
-
-	_, err = r.db.Query("SELECT * FROM USERS WHERE USER_ID=?", userID)
-	if err == sql.ErrNoRows {
-		return UserNotFoundError
-	}
-
+func (r Repository) CheckUserJoinTournament(ctx context.Context, tournamentID int64, userID int64) error {
 	var mtm model.MTMUserTournament
 	row := r.db.QueryRow("SELECT * FROM MTM_USER_TOURNAMENT WHERE TOURNAMENT_ID=? AND USER_ID=?", tournamentID, userID)
-	err = row.Scan(&mtm.ID, &mtm.TournamentID, &mtm.UserID)
+	err := row.Scan(&mtm.ID, &mtm.TournamentID, &mtm.UserID)
 	if err == nil {
 		return fmt.Errorf("user already joined this tournament error")
 	}
 
-	_, err = r.db.Exec("INSERT INTO MTM_USER_TOURNAMENT(TOURNAMENT_ID, USER_ID) VALUES (?,?)", tournamentID, userID)
+	return nil
+}
+
+func (r Repository) JoinUserTournament(ctx context.Context, tournamentID int64, userID int64) error {
+	tx, err := r.db.Begin()
 	if err != nil {
-		return fmt.Errorf("add user to tournament error: %v", err)
+		return fmt.Errorf("transaction error: %v", err)
+	}
+
+	_, err = tx.Exec("INSERT INTO MTM_USER_TOURNAMENT(TOURNAMENT_ID, USER_ID) VALUES (?,?)", tournamentID, userID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("join user to tournament error: %v", err)
+	}
+
+	_, err = tx.Exec("UPDATE TOURNAMENTS SET PRIZE=PRIZE+DEPOSIT WHERE TOURNAMENT_ID=?", tournamentID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("join user to tournament error: %v", err)
+	}
+
+	var deposit int64
+	err = tx.QueryRow("SELECT DEPOSIT FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", tournamentID).Scan(&deposit)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("join user to tournament error: %v", err)
+	}
+
+	_, err = tx.Exec("UPDATE USERS SET BALANCE=BALANCE-? WHERE USER_ID=?", deposit, userID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("join user to tournament error: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("transaction error: %v", err)
 	}
 
 	return nil
 }
 
-func (r Repository) IncreaseTournamentPrize(ctx context.Context, id int64, points int64) error {
-	res, err := r.db.Exec("UPDATE TOURNAMENTS SET PRIZE=PRIZE + ? WHERE TOURNAMENT_ID=?", points, id)
+func (r Repository) FinishTournament(ctx context.Context, tournamentID int64, winnerID int64) error {
+	tx, err := r.db.Begin()
 	if err != nil {
-		return fmt.Errorf("increase prize error: %v", err)
+		return fmt.Errorf("transaction error: %v", err)
 	}
 
-	count, err := res.RowsAffected()
+	_, err = tx.Exec("UPDATE TOURNAMENTS SET WINNER_ID=? WHERE TOURNAMENT_ID=?", winnerID, tournamentID)
 	if err != nil {
-		return fmt.Errorf("increase prize error: %v", err)
+		tx.Rollback()
+		return fmt.Errorf("finish tournament error: %v", err)
 	}
-	if count == 0 {
-		return TournamentNotFoundError
+
+	var prize int64
+	err = r.db.QueryRow("SELECT PRIZE FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", tournamentID).Scan(&prize)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("finish tournament error: %v", err)
+	}
+
+	_, err = tx.Exec("UPDATE USERS SET BALANCE=BALANCE+? WHERE USER_ID=?", prize, winnerID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("finish tournament error: %v", err)
+	}
+
+	_, err = tx.Exec("UPDATE TOURNAMENTS SET TOURNAMENT_STATUS='Finished' WHERE TOURNAMENT_ID=?", tournamentID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("finish tournament error: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("transaction error: %v")
 	}
 
 	return nil
 }
 
-func (r Repository) SetTournamentStatusByID(ctx context.Context, id int64, status string) error {
-	res, err := r.db.Exec("UPDATE TOURNAMENTS SET TOURNAMENT_STATUS=? WHERE TOURNAMENT_ID=?", status, id)
+func (r Repository) CancelTournament(ctx context.Context, id int64) error {
+	_, err := r.db.Exec(`
+					UPDATE USERS u  
+					JOIN MTM_USER_TOURNAMENT m ON u.USER_ID = m.USER_ID 
+					JOIN TOURNAMENTS t ON t.TOURNAMENT_ID = m.TOURNAMENT_ID 
+					SET u.BALANCE=u.BALANCE+t.DEPOSIT, t.TOURNAMENT_STATUS='Canceled'
+					WHERE t.TOURNAMENT_ID=?
+					`, id)
 	if err != nil {
-		return fmt.Errorf("set tournament status error: %v", err)
-	}
-
-	count, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("set tournament status error: %v", err)
-	}
-	if count == 0 {
-		return TournamentNotFoundError
-	}
-
-	return nil
-}
-
-func (r Repository) SetTournamentWinner(ctx context.Context, tournamentID int64, winnerID int64) error {
-	_, err := r.db.Query("SELECT * FROM MTM_USER_TOURNAMENT WHERE TOURNAMENT_ID=? AND USER_ID=?", tournamentID, winnerID)
-	if err == sql.ErrNoRows {
-		fmt.Errorf("user or tournament not found error: %v", err)
-	}
-
-	_, err = r.db.Exec("UPDATE TOURNAMENTS SET WINNER_ID=? WHERE TOURNAMENT_ID=?", winnerID, tournamentID)
-	if err != nil {
-		return fmt.Errorf("set tournament winner error: %v", err)
+		return fmt.Errorf("cancel tournament error: %v", err)
 	}
 
 	return nil
