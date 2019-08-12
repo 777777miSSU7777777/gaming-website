@@ -12,7 +12,7 @@ type GetUserRequest struct {
 type DeleteUserRequest GetUserRequest
 
 type UserTakeRequest struct {
-	ID     int64
+	ID     int64 `json:",omitempty"`
 	Points int64 `json:"points"`
 }
 
@@ -24,18 +24,18 @@ type NewTournamentRequest struct {
 }
 
 type GetTournamentRequest struct {
-	ID int64
+	ID int64 `json:",omitempty"`
 }
 
 type JoinTournamentRequest struct {
-	TournamentID int64
+	TournamentID int64 `json:",omitempty"`
 	UserID       int64 `json:"userId"`
 }
 
 type FinishTournamentRequest struct {
-	ID int64
+	ID int64 `json:",omitempty"`
 }
 
 type CancelTournamentRequest struct {
-	ID int64
+	ID int64 `json:",omitempty"`
 }
