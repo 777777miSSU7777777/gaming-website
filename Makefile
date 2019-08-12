@@ -7,7 +7,10 @@ fmt:
 	goimports -w ./
 
 .PHONY: test
-test: ;
+test: 
+	sudo docker-compose up --build -d
+	go test test/main_test.go
+	sudo docker-compose down
 
 .PHONY: build
 build:
