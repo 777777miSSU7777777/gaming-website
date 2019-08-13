@@ -10,10 +10,11 @@ import (
 	"github.com/777777miSSU7777777/gaming-website/api"
 )
 
+var baseURL = "http://127.0.0.1:8080"
+
 // Runs user api tests with correct data
 func TestFlow1(t *testing.T) {
 	client := &http.Client{}
-	baseURL := "http://127.0.0.1:8080"
 
 	// New user test
 	newUserReq := api.NewUserRequest{Name: "test_user", Balance: 1000}
