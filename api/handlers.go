@@ -117,7 +117,7 @@ func (a API) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = json.NewEncoder(w).Encode(DeleteUserRequest{})
+	_ = json.NewEncoder(w).Encode(DeleteUserResponse{})
 }
 
 func (a API) UserTake(w http.ResponseWriter, r *http.Request) {
