@@ -239,23 +239,13 @@ func (r Repository) GetTournamentUsers(ctx context.Context, id int64) ([]model.U
 		return nil, TournamentNotFoundError
 	}
 
-	var count int
-	row := r.db.QueryRow("SELECT COUNT(*) FROM USERS AS t1 JOIN MTM_USER_TOURNAMENT AS t2 ON t1.USER_ID = t2.USER_ID WHERE t2.TOURNAMENT_ID = ?", id)
-	err = row.Scan(&count)
-	if err != nil {
-		return nil, fmt.Errorf("error while getting count of users: %v", err)
-	}
-	if count == 0 {
-		return nil, errors.New("users not found error")
-	}
-
 	rows, err := r.db.Query("SELECT t1.* FROM USERS AS t1 JOIN MTM_USER_TOURNAMENT AS t2 ON t1.USER_ID = t2.USER_ID WHERE t2.TOURNAMENT_ID = ?", id)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting users: %v", err)
 	}
 	defer rows.Close()
 
-	users := make([]model.User, 0, count)
+	users := []model.User{}
 	for rows.Next() {
 		user := model.User{}
 		err := rows.Scan(&user.ID, &user.Username, &user.Balance)
@@ -263,6 +253,10 @@ func (r Repository) GetTournamentUsers(ctx context.Context, id int64) ([]model.U
 			return nil, fmt.Errorf("error while scanning users: %v", err)
 		}
 		users = append(users, user)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("error while scanning users: %v", err)
 	}
 
 	return users, nil
