@@ -147,29 +147,26 @@ func (r Repository) JoinUserTournament(ctx context.Context, tournamentID int64, 
 	if err != nil {
 		return fmt.Errorf("transaction error: %v", err)
 	}
+	defer tx.Rollback()
 
 	_, err = tx.Exec("INSERT INTO MTM_USER_TOURNAMENT(TOURNAMENT_ID, USER_ID) VALUES (?,?)", tournamentID, userID)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("join user to tournament error: %v", err)
 	}
 
 	_, err = tx.Exec("UPDATE TOURNAMENTS SET PRIZE=PRIZE+DEPOSIT WHERE TOURNAMENT_ID=?", tournamentID)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("join user to tournament error: %v", err)
 	}
 
 	var deposit int64
 	err = tx.QueryRow("SELECT DEPOSIT FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", tournamentID).Scan(&deposit)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("join user to tournament error: %v", err)
 	}
 
 	_, err = tx.Exec("UPDATE USERS SET BALANCE=BALANCE-? WHERE USER_ID=?", deposit, userID)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("join user to tournament error: %v", err)
 	}
 
