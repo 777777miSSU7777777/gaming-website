@@ -13,326 +13,303 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var baseURL = "http://127.0.0.1:8080"
+type APIClient struct {
+	client  *http.Client
+	baseURL string
+}
 
-// User api tests with correct data
-func TestFlow1(t *testing.T) {
-	client := &http.Client{}
+func (c APIClient) NewUser(name string, balance int64) (int, api.NewUserResponse) {
+	body, _ := json.Marshal(api.NewUserRequest{Name: name, Balance: balance})
+	req, _ := http.NewRequest("POST", c.baseURL+"/user", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := c.client.Do(req)
+	var newUser api.NewUserResponse
+	_ = json.NewDecoder(resp.Body).Decode(&newUser)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, newUser
+}
+
+func (c APIClient) GetUser(id int64) (int, api.GetUserResponse) {
+	req, _ := http.NewRequest("GET", c.baseURL+fmt.Sprintf("/user/%v", id), nil)
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := c.client.Do(req)
+	var getUser api.GetUserResponse
+	_ = json.NewDecoder(resp.Body).Decode(&getUser)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, getUser
+}
+
+func (c APIClient) DeleteUser(id int64) int {
+	req, _ := http.NewRequest("DELETE", c.baseURL+fmt.Sprintf("/user/%v", id), nil)
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := c.client.Do(req)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode
+}
+
+func (c APIClient) UserTake(id int64, points int64) (int, api.UserTakeResponse) {
+	body, _ := json.Marshal(api.UserTakeRequest{Points: points})
+	req, _ := http.NewRequest("POST", c.baseURL+fmt.Sprintf("/user/%v/take", id), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := c.client.Do(req)
+	var userTake api.UserTakeResponse
+	_ = json.NewDecoder(resp.Body).Decode(&userTake)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, userTake
+}
+
+func (c APIClient) UserFund(id int64, points int64) (int, api.UserFundResponse) {
+	body, _ := json.Marshal(api.UserFundRequest{Points: points})
+	req, _ := http.NewRequest("POST", c.baseURL+fmt.Sprintf("/user/%v/fund", id), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := c.client.Do(req)
+	var userFund api.UserFundResponse
+	_ = json.NewDecoder(resp.Body).Decode(&userFund)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, userFund
+}
+
+func (c APIClient) UserErr(method string, url string, body []byte) (int, api.ErrorResponse) {
+	req, _ := http.NewRequest(method, c.baseURL+url, bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := c.client.Do(req)
+	var err api.ErrorResponse
+	_ = json.NewDecoder(resp.Body).Decode(&err)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, err
+}
+
+func (c APIClient) NewTournament(name string, deposit int64) (int, api.NewTournamentResponse) {
+	body, _ := json.Marshal(api.NewTournamentRequest{Name: name, Deposit: deposit})
+	req, _ := http.NewRequest("POST", c.baseURL+"/tournament", bytes.NewBuffer(body))
+	resp, _ := c.client.Do(req)
+	var newTournament api.NewTournamentResponse
+	_ = json.NewDecoder(resp.Body).Decode(&newTournament)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, newTournament
+}
+
+func (c APIClient) GetTournament(id int64) (int, api.GetTournamentResponse) {
+	req, _ := http.NewRequest("GET", c.baseURL+fmt.Sprintf("/tournament/%v", id), nil)
+	resp, _ := c.client.Do(req)
+	var getTournament api.GetTournamentResponse
+	_ = json.NewDecoder(resp.Body).Decode(&getTournament)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, getTournament
+}
+
+func (c APIClient) JoinUserTournament(tID int64, uID int64) (int, api.JoinTournamentResponse) {
+	body, _ := json.Marshal(api.JoinTournamentRequest{UserID: uID})
+	req, _ := http.NewRequest("POST", c.baseURL+fmt.Sprintf("/tournament/%v/join", tID), bytes.NewBuffer(body))
+	resp, _ := c.client.Do(req)
+	var joinTournament api.JoinTournamentResponse
+	_ = json.NewDecoder(resp.Body).Decode(&joinTournament)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, joinTournament
+}
+
+func (c APIClient) FinishTournament(id int64) (int, api.FinishTournamentResponse) {
+	req, _ := http.NewRequest("POST", c.baseURL+fmt.Sprintf("/tournament/%v/finish", id), nil)
+	resp, _ := c.client.Do(req)
+	var finishedTournament api.FinishTournamentResponse
+	_ = json.NewDecoder(resp.Body).Decode(&finishedTournament)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode, finishedTournament
+}
+
+func (c APIClient) CancelTournament(id int64) int {
+	req, _ := http.NewRequest("DELETE", c.baseURL+fmt.Sprintf("/tournament/%v", id), nil)
+	resp, _ := c.client.Do(req)
+	_ = resp.Body.Close()
+
+	return resp.StatusCode
+}
+
+func TestUserApiWithCorrectData(t *testing.T) {
+	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
 
 	// New user test
-	newUserReq := api.NewUserRequest{Name: "test_user", Balance: 1000}
-	body, _ := json.Marshal(newUserReq)
-	req, _ := http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ := client.Do(req)
-	var newUserResp api.NewUserResponse
-	_ = json.NewDecoder(resp.Body).Decode(&newUserResp)
-	_ = resp.Body.Close()
+	code, newUser := client.NewUser("test_user", 1000)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.NotEqual(t, int64(0), newUserResp.ID)
-	require.Equal(t, newUserReq.Name, newUserResp.Name)
-	require.Equal(t, newUserReq.Balance, newUserResp.Balance)
+	require.Equal(t, http.StatusOK, code)
+	require.NotEqual(t, int64(0), newUser.ID)
+	require.Equal(t, "test_user", newUser.Name)
+	require.Equal(t, int64(1000), newUser.Balance)
 
 	// Get user test
-	req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/user/%v", newUserResp.ID), nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	var getUserResp api.GetUserResponse
-	_ = json.NewDecoder(resp.Body).Decode(&getUserResp)
-	_ = resp.Body.Close()
+	code, getUser := client.GetUser(newUser.ID)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.Equal(t, newUserResp.ID, getUserResp.ID)
-	require.Equal(t, newUserResp.Name, getUserResp.Name)
-	require.Equal(t, newUserResp.Balance, getUserResp.Balance)
+	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, newUser.ID, getUser.ID)
+	require.Equal(t, newUser.Name, getUser.Name)
+	require.Equal(t, newUser.Balance, getUser.Balance)
 
 	// Take user balance test
-	userTakeReq := api.UserTakeRequest{Points: 500}
-	body, _ = json.Marshal(userTakeReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/take", newUserResp.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	var userTakeResp api.UserTakeResponse
-	_ = json.NewDecoder(resp.Body).Decode(&userTakeResp)
-	_ = resp.Body.Close()
+	code, userTake := client.UserTake(newUser.ID, 500)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.Equal(t, newUserResp.ID, userTakeResp.ID)
-	require.Equal(t, newUserResp.Name, userTakeResp.Name)
-	require.Equal(t, newUserResp.Balance-userTakeReq.Points, userTakeResp.Balance)
+	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, newUser.ID, userTake.ID)
+	require.Equal(t, newUser.Name, userTake.Name)
+	require.Equal(t, newUser.Balance-500, userTake.Balance)
 
 	// Fund user balance test
-	userFundReq := api.UserFundRequest{Points: 1000}
-	body, _ = json.Marshal(userFundReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/fund", newUserResp.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	var userFundResp api.UserFundResponse
-	_ = json.NewDecoder(resp.Body).Decode(&userFundResp)
-	_ = resp.Body.Close()
+	code, userFund := client.UserFund(newUser.ID, 1000)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.Equal(t, newUserResp.ID, userFundResp.ID)
-	require.Equal(t, newUserResp.Name, userFundResp.Name)
-	require.Equal(t, userTakeResp.Balance+userFundReq.Points, userFundResp.Balance)
+	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, newUser.ID, userFund.ID)
+	require.Equal(t, newUser.Name, userFund.Name)
+	require.Equal(t, userTake.Balance+1000, userFund.Balance)
 
 	// Delete user test
-	req, _ = http.NewRequest("DELETE", baseURL+fmt.Sprintf("/user/%v", newUserResp.ID), nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = resp.Body.Close()
+	code = client.DeleteUser(newUser.ID)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, code)
 }
 
-// User api tests with incorrect data
-func TestFlow2(t *testing.T) {
-	client := &http.Client{}
+func TestUserApiWithIncorrectData(t *testing.T) {
+	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
 
 	// New user with empty name
-	newUserReq := api.NewUserRequest{Name: "", Balance: 1000}
-	body, _ := json.Marshal(newUserReq)
-	req, _ := http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ := client.Do(req)
-	var errResp api.ErrorResponse
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err := client.UserErr("POST", "/user", []byte(`{"name": "", "balance": 1000}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ValidationError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ValidationError, err.Type)
 
 	// New user with negative balance
-	newUserReq = api.NewUserRequest{Name: "tedt_user", Balance: -1000}
-	body, _ = json.Marshal(newUserReq)
-	req, _ = http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ValidationError, errResp.Type)
+	code, err = client.UserErr("POST", "/user", []byte(`{"name": "test_user", "balance": -1000}`))
+
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ValidationError, err.Type)
 
 	// New user with incorrect body
-	req, _ = http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer([]byte(`{"name":123, "balance:"abc"}`)))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", "/user", []byte(`{"name": 123, "balance": "abc"}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.BodyParseError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.BodyParseError, err.Type)
 
 	// Get not existing user
-	req, _ = http.NewRequest("GET", baseURL+"/user/-1", nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("GET", "/user/-1", nil)
 
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	require.Equal(t, api.NotFoundError, errResp.Type)
+	require.Equal(t, http.StatusNotFound, code)
+	require.Equal(t, api.NotFoundError, err.Type)
 
 	// Get with invalid id
-	req, _ = http.NewRequest("GET", baseURL+"/user/abc", nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("GET", "/user/abc", nil)
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.IDParseError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.IDParseError, err.Type)
 
 	// Delete not existing user
-	req, _ = http.NewRequest("DELETE", baseURL+"/user/-1", nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("DELETE", "/user/-1", nil)
 
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	require.Equal(t, api.NotFoundError, errResp.Type)
+	require.Equal(t, http.StatusNotFound, code)
+	require.Equal(t, api.NotFoundError, err.Type)
 
 	// Create correct user to test take and fund actions with incorrect data
-	newUserReq = api.NewUserRequest{Name: "test_user", Balance: 1000}
-	body, _ = json.Marshal(newUserReq)
-	req, _ = http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	var testUser api.NewUserResponse
-	_ = json.NewDecoder(resp.Body).Decode(&testUser)
-	_ = resp.Body.Close()
+	_, testUser := client.NewUser("test_user", 1000)
 
 	// User take with 0 points
-	userTakeReq := api.UserTakeRequest{Points: 0}
-	body, _ = json.Marshal(userTakeReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/take", testUser.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/take", testUser.ID), []byte(`{"points": 0}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ServiceError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ServiceError, err.Type)
 
 	// User take with negative points
-	userTakeReq = api.UserTakeRequest{Points: -1000}
-	body, _ = json.Marshal(userTakeReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/take", testUser.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/take", testUser.ID), []byte(`{"points": -1000}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ServiceError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ServiceError, err.Type)
 
 	// User take with points more than balance
-	userTakeReq = api.UserTakeRequest{Points: 2000}
-	body, _ = json.Marshal(userTakeReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/take", testUser.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/take", testUser.ID), []byte(`{"points": 2000}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ServiceError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ServiceError, err.Type)
 
 	// Take balance of not existing user
-	userTakeReq = api.UserTakeRequest{Points: 1000}
-	body, _ = json.Marshal(userTakeReq)
-	req, _ = http.NewRequest("POST", baseURL+"/user/-1/take", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", "/user/-1/take", []byte(`{"points": 1000}`))
 
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	require.Equal(t, api.NotFoundError, errResp.Type)
+	require.Equal(t, http.StatusNotFound, code)
+	require.Equal(t, api.NotFoundError, err.Type)
 
 	// User take balance with incorrect body
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/take", testUser.ID), bytes.NewBuffer([]byte(`{"points":"abc"}`)))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/take", testUser.ID), []byte(`{"points": "abc"}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.BodyParseError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.BodyParseError, err.Type)
 
 	// User fund with 0 points
-	userFundReq := api.UserFundRequest{Points: 0}
-	body, _ = json.Marshal(userFundReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/fund", testUser.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/fund", testUser.ID), []byte(`{"points": 0}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ServiceError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ServiceError, err.Type)
 
 	// User fund with negative points
-	userFundReq = api.UserFundRequest{Points: -1000}
-	body, _ = json.Marshal(userFundReq)
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/fund", testUser.ID), bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/fund", testUser.ID), []byte(`{"points": -1000}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.ServiceError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.ServiceError, err.Type)
 
 	// Fund balance of not existing user
-	userFundReq = api.UserFundRequest{Points: 1000}
-	body, _ = json.Marshal(userTakeReq)
-	req, _ = http.NewRequest("POST", baseURL+"/user/-1/fund", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", "/user/-1/fund", []byte(`{"points": 1000}`))
 
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	require.Equal(t, api.NotFoundError, errResp.Type)
+	require.Equal(t, http.StatusNotFound, code)
+	require.Equal(t, api.NotFoundError, err.Type)
 
 	// User fund balance with incorrect body
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/user/%v/fund", testUser.ID), bytes.NewBuffer([]byte(`{"points":"abc"}`)))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&errResp)
-	_ = resp.Body.Close()
+	code, err = client.UserErr("POST", fmt.Sprintf("/user/%v/fund", testUser.ID), []byte(`{"points": "abc"}`))
 
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	require.Equal(t, api.BodyParseError, errResp.Type)
+	require.Equal(t, http.StatusBadRequest, code)
+	require.Equal(t, api.BodyParseError, err.Type)
 }
 
-// Tournament api tests with finish
-func TestFlow3(t *testing.T) {
-	client := &http.Client{}
+func TestTournamentFinish(t *testing.T) {
+	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
 
 	// New tournament test
-	newTReq := api.NewTournamentRequest{Name: "T1", Deposit: 1000}
-	body, _ := json.Marshal(newTReq)
-	req, _ := http.NewRequest("POST", baseURL+"/tournament", bytes.NewBuffer(body))
-	resp, _ := client.Do(req)
-	var newTResp api.NewTournamentResponse
-	_ = json.NewDecoder(resp.Body).Decode(&newTResp)
-	_ = resp.Body.Close()
+	code, newTournament := client.NewTournament("test_tournament", 1000)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.NotEqual(t, int64(0), newTResp.ID)
-	require.Equal(t, newTReq.Name, newTResp.Name)
-	require.Equal(t, newTReq.Deposit, newTResp.Deposit)
-	require.Equal(t, int64(0), newTResp.Prize)
+	require.Equal(t, http.StatusOK, code)
+	require.NotEqual(t, int64(0), newTournament.ID)
+	require.Equal(t, "test_tournament", newTournament.Name)
+	require.Equal(t, int64(1000), newTournament.Deposit)
+	require.Equal(t, int64(0), newTournament.Prize)
 
 	// Get tournament test
-	req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/tournament/%v", newTResp.ID), nil)
-	resp, _ = client.Do(req)
-	var getTResp api.GetTournamentResponse
-	_ = json.NewDecoder(resp.Body).Decode(&getTResp)
-	_ = resp.Body.Close()
+	code, getTournament := client.GetTournament(newTournament.ID)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.Equal(t, newTResp.ID, getTResp.ID)
-	require.Equal(t, newTResp.Name, getTResp.Name)
-	require.Equal(t, newTResp.Deposit, getTResp.Deposit)
+	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, newTournament.ID, getTournament.ID)
+	require.Equal(t, newTournament.Name, getTournament.Name)
+	require.Equal(t, newTournament.Deposit, getTournament.Deposit)
 
 	// Create users to join tournament
-
 	var testUsers [5]model.User
 
 	for i := 0; i < len(testUsers); i++ {
-		newUserReq := api.NewUserRequest{Name: "test_user", Balance: 1000}
-		body, _ := json.Marshal(newUserReq)
-		req, _ := http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		resp, _ := client.Do(req)
-		var newUserResp api.NewUserResponse
-		_ = json.NewDecoder(resp.Body).Decode(&newUserResp)
-		_ = resp.Body.Close()
-
-		testUsers[i] = model.User{ID: newUserResp.ID, Username: newUserResp.Name, Balance: newUserResp.Balance}
+		_, newUser := client.NewUser("test_user", 1000)
+		testUsers[i] = model.User{ID: newUser.ID, Username: newUser.Name, Balance: newUser.Balance}
 	}
 
 	// Join created users to tournament
-
 	for _, u := range testUsers {
-		joinUserReq := api.JoinTournamentRequest{UserID: u.ID}
-		body, _ := json.Marshal(joinUserReq)
-		req, _ := http.NewRequest("POST", baseURL+fmt.Sprintf("/tournament/%v/join", newTResp.ID), bytes.NewBuffer(body))
-		resp, _ := client.Do(req)
-		var joinTResp api.JoinTournamentResponse
-		_ = json.NewDecoder(resp.Body).Decode(&joinTResp)
-		_ = resp.Body.Close()
+		code, joinTournament := client.JoinUserTournament(newTournament.ID, u.ID)
 
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, http.StatusOK, code)
 
 		isUserJoined := false
-		for _, j := range joinTResp.Users {
+		for _, j := range joinTournament.Users {
 			if u.ID == j.ID {
 				isUserJoined = true
 				break
@@ -344,42 +321,29 @@ func TestFlow3(t *testing.T) {
 
 	// Check and update users data
 	for i, u := range testUsers {
-		req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/user/%v", u.ID), nil)
-		req.Header.Set("Content-Type", "application/json")
-		resp, _ = client.Do(req)
-		var user api.GetUserResponse
-		_ = json.NewDecoder(resp.Body).Decode(&user)
-		_ = resp.Body.Close()
+		_, user := client.GetUser(u.ID)
 
-		require.Equal(t, u.Balance-newTResp.Deposit, user.Balance)
+		require.Equal(t, u.Balance-newTournament.Deposit, user.Balance)
 
 		testUsers[i].Balance = user.Balance
 	}
 
 	// Check tournament prize
-	var tWithUsers api.GetTournamentResponse
-	req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/tournament/%v", newTResp.ID), nil)
-	resp, _ = client.Do(req)
-	_ = json.NewDecoder(resp.Body).Decode(&tWithUsers)
-	_ = resp.Body.Close()
+	code, tournamentWithUsers := client.GetTournament(newTournament.ID)
 
-	require.Equal(t, tWithUsers.Deposit*int64(len(testUsers)), tWithUsers.Prize)
+	require.Equal(t, tournamentWithUsers.Deposit*int64(len(testUsers)), tournamentWithUsers.Prize)
 
 	// Check finish tournament
-	req, _ = http.NewRequest("POST", baseURL+fmt.Sprintf("/tournament/%v/finish", newTResp.ID), nil)
-	resp, _ = client.Do(req)
-	var finishedTResp api.FinishTournamentResponse
-	_ = json.NewDecoder(resp.Body).Decode(&finishedTResp)
-	_ = resp.Body.Close()
+	code, finishedTournament := client.FinishTournament(newTournament.ID)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, code)
 
 	isWinnerFound := false
 	winnerID := int64(-1)
 	winnerIdx := -1
 
 	for idx, u := range testUsers {
-		for _, p := range finishedTResp.Users {
+		for _, p := range finishedTournament.Users {
 			if p.ID == u.ID && p.Winner {
 				isWinnerFound = true
 				winnerID = p.ID
@@ -395,71 +359,38 @@ func TestFlow3(t *testing.T) {
 	require.True(t, isWinnerFound)
 
 	// Check winner
-	req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/user/%v", winnerID), nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ = client.Do(req)
-	var user api.GetUserResponse
-	_ = json.NewDecoder(resp.Body).Decode(&user)
-	_ = resp.Body.Close()
+	_, winner := client.GetUser(winnerID)
 
-	require.Equal(t, testUsers[winnerIdx].Balance+tWithUsers.Prize, user.Balance)
+	require.Equal(t, testUsers[winnerIdx].Balance+tournamentWithUsers.Prize, winner.Balance)
 }
 
-// Tournament api tests with cancel
-func TestFlow4(t *testing.T) {
-	client := &http.Client{}
+func TestTournamentCancel(t *testing.T) {
+	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
 
 	// Create new tournament
-	newTReq := api.NewTournamentRequest{Name: "T2", Deposit: 1000}
-	body, _ := json.Marshal(newTReq)
-	req, _ := http.NewRequest("POST", baseURL+"/tournament", bytes.NewBuffer(body))
-	resp, _ := client.Do(req)
-	var tour api.NewTournamentResponse
-	_ = json.NewDecoder(resp.Body).Decode(&tour)
-	_ = resp.Body.Close()
+	code, newTournament := client.NewTournament("test_tournament", 1000)
 
-	// Create test users
+	// Create users to join tournament
 	var testUsers [5]model.User
 
 	for i := 0; i < len(testUsers); i++ {
-		newUserReq := api.NewUserRequest{Name: "test_user", Balance: 1000}
-		body, _ := json.Marshal(newUserReq)
-		req, _ := http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		resp, _ := client.Do(req)
-		var newUserResp api.NewUserResponse
-		_ = json.NewDecoder(resp.Body).Decode(&newUserResp)
-		_ = resp.Body.Close()
-
-		testUsers[i] = model.User{ID: newUserResp.ID, Username: newUserResp.Name, Balance: newUserResp.Balance}
+		_, newUser := client.NewUser("test_user", 1000)
+		testUsers[i] = model.User{ID: newUser.ID, Username: newUser.Name, Balance: newUser.Balance}
 	}
 
-	// Join users to tournament
+	// Join created users to tournament
 	for _, u := range testUsers {
-		joinUserReq := api.JoinTournamentRequest{UserID: u.ID}
-		body, _ := json.Marshal(joinUserReq)
-		req, _ := http.NewRequest("POST", baseURL+fmt.Sprintf("/tournament/%v/join", tour.ID), bytes.NewBuffer(body))
-		resp, _ := client.Do(req)
-		var joinTResp api.JoinTournamentResponse
-		_ = json.NewDecoder(resp.Body).Decode(&joinTResp)
-		_ = resp.Body.Close()
+		_, _ = client.JoinUserTournament(newTournament.ID, u.ID)
 	}
 
 	// Check cancel tournament
-	req, _ = http.NewRequest("DELETE", baseURL+fmt.Sprintf("/tournament/%v", tour.ID), nil)
-	resp, _ = client.Do(req)
-	_ = resp.Body.Close()
+	code = client.CancelTournament(newTournament.ID)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, code)
 
 	// Check returned money from canceled tournament
 	for _, u := range testUsers {
-		req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/user/%v", u.ID), nil)
-		req.Header.Set("Content-Type", "application/json")
-		resp, _ = client.Do(req)
-		var user api.GetUserResponse
-		_ = json.NewDecoder(resp.Body).Decode(&user)
-		_ = resp.Body.Close()
+		_, user := client.GetUser(u.ID)
 
 		require.Equal(t, u.Balance, user.Balance)
 	}
