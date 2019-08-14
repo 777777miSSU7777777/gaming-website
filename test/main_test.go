@@ -430,3 +430,79 @@ func TestFlow3(t *testing.T) {
 
 	_ = resp.Body.Close()
 }
+
+func TestFlow4(t *testing.T) {
+	client := &http.Client{}
+
+	// Create new tournament
+	newTReq := api.NewTournamentRequest{Name: "T2", Deposit: 1000}
+	body, _ := json.Marshal(newTReq)
+	req, _ := http.NewRequest("POST", baseURL+"/tournament", bytes.NewBuffer(body))
+	resp, _ := client.Do(req)
+	var tour api.NewTournamentResponse
+	_ = json.NewDecoder(resp.Body).Decode(&tour)
+
+	_ = resp.Body.Close()
+
+	// Create test users
+	var testUsers [5]model.User
+
+	for i := 0; i < len(testUsers); i++ {
+		newUserReq := api.NewUserRequest{Name: "test_user", Balance: 1000}
+		body, _ := json.Marshal(newUserReq)
+		req, _ := http.NewRequest("POST", baseURL+"/user", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ := client.Do(req)
+		var newUserResp api.NewUserResponse
+		_ = json.NewDecoder(resp.Body).Decode(&newUserResp)
+
+		testUsers[i] = model.User{ID: newUserResp.ID, Username: newUserResp.Name, Balance: newUserResp.Balance}
+
+		_ = resp.Body.Close()
+	}
+
+	// Join users to tournament
+	for _, u := range testUsers {
+		joinUserReq := api.JoinTournamentRequest{UserID: u.ID}
+		body, _ := json.Marshal(joinUserReq)
+		req, _ := http.NewRequest("POST", baseURL+fmt.Sprintf("/tournament/%v/join", tour.ID), bytes.NewBuffer(body))
+		resp, _ := client.Do(req)
+		var joinTResp api.JoinTournamentResponse
+		_ = json.NewDecoder(resp.Body).Decode(&joinTResp)
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		isUserJoined := false
+		for _, j := range joinTResp.Users {
+			if u.ID == j.ID {
+				isUserJoined = true
+				break
+			}
+		}
+
+		require.True(t, isUserJoined)
+
+		_ = resp.Body.Close()
+	}
+
+	// Check cancel tournament
+	req, _ = http.NewRequest("DELETE", baseURL+fmt.Sprintf("/tournament/%v", tour.ID), nil)
+	resp, _ = client.Do(req)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	_ = resp.Body.Close()
+
+	// Check returned money from canceled tournament
+	for _, u := range testUsers {
+		req, _ = http.NewRequest("GET", baseURL+fmt.Sprintf("/user/%v", u.ID), nil)
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ = client.Do(req)
+		var user api.GetUserResponse
+		_ = json.NewDecoder(resp.Body).Decode(&user)
+
+		require.Equal(t, u.Balance, user.Balance)
+
+		_ = resp.Body.Close()
+	}
+}
