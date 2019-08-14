@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/rand"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -179,34 +181,57 @@ func (r Repository) JoinUserTournament(ctx context.Context, tournamentID int64, 
 	return nil
 }
 
-func (r Repository) FinishTournament(ctx context.Context, tournamentID int64, winnerID int64) error {
+func (r Repository) FinishTournament(ctx context.Context, id int64) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("transaction error: %v", err)
 	}
 
-	_, err = tx.Exec("UPDATE TOURNAMENTS SET WINNER_ID=? WHERE TOURNAMENT_ID=?", winnerID, tournamentID)
+	defer tx.Rollback()
+
+	rows, err := tx.Query("SELECT t1.USER_ID FROM USERS AS t1 JOIN MTM_USER_TOURNAMENT AS t2 ON t1.USER_ID = t2.USER_ID WHERE t2.TOURNAMENT_ID = ?", id)
 	if err != nil {
-		tx.Rollback()
+		return fmt.Errorf("finish tournament error: %v", err)
+	}
+	defer rows.Close()
+
+	users := []int64{}
+	for rows.Next() {
+		var userID int64
+		err := rows.Scan(&userID)
+		if err != nil {
+			return fmt.Errorf("finish tournament error: %v", err)
+		}
+		users = append(users, userID)
+	}
+
+	if rows.Err() != nil {
+		return fmt.Errorf("finish tournament error: %v", err)
+	}
+
+	src := rand.NewSource(time.Now().Unix())
+	random := rand.New(src)
+	i := random.Intn(len(users))
+	winnerID := users[i]
+
+	_, err = tx.Exec("UPDATE TOURNAMENTS SET WINNER_ID=? WHERE TOURNAMENT_ID=?", winnerID, id)
+	if err != nil {
 		return fmt.Errorf("finish tournament error: %v", err)
 	}
 
 	var prize int64
-	err = r.db.QueryRow("SELECT PRIZE FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", tournamentID).Scan(&prize)
+	err = tx.QueryRow("SELECT PRIZE FROM TOURNAMENTS WHERE TOURNAMENT_ID=?", id).Scan(&prize)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("finish tournament error: %v", err)
 	}
 
 	_, err = tx.Exec("UPDATE USERS SET BALANCE=BALANCE+? WHERE USER_ID=?", prize, winnerID)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("finish tournament error: %v", err)
 	}
 
-	_, err = tx.Exec("UPDATE TOURNAMENTS SET TOURNAMENT_STATUS='Finished' WHERE TOURNAMENT_ID=?", tournamentID)
+	_, err = tx.Exec("UPDATE TOURNAMENTS SET TOURNAMENT_STATUS='Finished' WHERE TOURNAMENT_ID=?", id)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("finish tournament error: %v", err)
 	}
 

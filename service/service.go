@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"math/rand"
-	"time"
 
 	"github.com/777777miSSU7777777/gaming-website/repository"
 
@@ -194,19 +192,18 @@ func (s Service) FinishTournament(id int64) (model.Tournament, []model.User, err
 		return model.Tournament{}, nil, err
 	}
 
-	users, err := s.repo.GetTournamentUsers(context.Background(), id)
+	err = s.repo.FinishTournament(context.Background(), id)
+
 	if err != nil {
 		return model.Tournament{}, nil, err
 	}
 
-	src := rand.NewSource(time.Now().Unix())
-	random := rand.New(src)
-	i := random.Intn(len(users))
-	winnerID := users[i].ID
-
-	err = s.repo.FinishTournament(context.Background(), id, winnerID)
-
 	tournament, err = s.repo.GetTournamentByID(context.Background(), id)
+	if err != nil {
+		return model.Tournament{}, nil, err
+	}
+
+	users, err := s.repo.GetTournamentUsers(context.Background(), id)
 	if err != nil {
 		return model.Tournament{}, nil, err
 	}
