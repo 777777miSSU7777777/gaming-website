@@ -206,6 +206,10 @@ func (r Repository) FinishTournament(ctx context.Context, id int64) error {
 		return fmt.Errorf("finish tournament error: %v", err)
 	}
 
+	if !(len(users) > 0) {
+		return fmt.Errorf("finish tournament error: tournament cant be finished without users")
+	}
+
 	src := rand.NewSource(time.Now().Unix())
 	random := rand.New(src)
 	i := random.Intn(len(users))
