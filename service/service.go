@@ -6,32 +6,19 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/777777miSSU7777777/gaming-website/repository"
+
 	"github.com/777777miSSU7777777/gaming-website/model"
 )
 
-type Repository interface {
-	NewUser(context.Context, string, int64) (int64, error)
-	GetUserByID(context.Context, int64) (model.User, error)
-	DeleteUserByID(context.Context, int64) error
-	TakeUserBalanceByID(context.Context, int64, int64) error
-	AddUserBalanceByID(context.Context, int64, int64) error
-	NewTournament(context.Context, string, int64) (int64, error)
-	GetTournamentByID(context.Context, int64) (model.Tournament, error)
-	CheckUserJoinTournament(context.Context, int64, int64) error
-	JoinUserTournament(context.Context, int64, int64) error
-	FinishTournament(context.Context, int64, int64) error
-	CancelTournament(context.Context, int64) error
-	GetTournamentUsers(context.Context, int64) ([]model.User, error)
-}
-
 type Service struct {
-	repo Repository
+	repo repository.Repository
 }
 
 var TournamentFinishedError = errors.New("tournament already finished")
 var TournamentCanceledError = errors.New("tournament already canceled")
 
-func New(r Repository) Service {
+func New(r repository.Repository) Service {
 	return Service{r}
 }
 

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/777777miSSU7777777/gaming-website/service"
+
 	"github.com/777777miSSU7777777/gaming-website/model"
 	"github.com/gorilla/mux"
 )
@@ -28,24 +30,11 @@ func writeError(w http.ResponseWriter, statusCode int, errType string, err error
 	_ = json.NewEncoder(w).Encode(ErrorResponse{Type: errType, Error: err.Error()})
 }
 
-type Service interface {
-	NewUser(string, int64) (model.User, error)
-	GetUser(int64) (model.User, error)
-	DeleteUser(int64) error
-	UserTake(int64, int64) (model.User, error)
-	UserFund(int64, int64) (model.User, error)
-	NewTournament(string, int64) (model.Tournament, error)
-	GetTournament(int64) (model.Tournament, []model.User, error)
-	JoinTournament(int64, int64) (model.Tournament, []model.User, error)
-	FinishTournament(int64) (model.Tournament, []model.User, error)
-	CancelTournament(int64) error
-}
-
 type API struct {
-	svc Service
+	svc service.Service
 }
 
-func New(svc Service) API {
+func New(svc service.Service) API {
 	return API{svc}
 }
 
