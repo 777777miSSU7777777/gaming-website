@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -21,6 +22,13 @@ func NewHttpServer(api API) http.Handler {
 	r.Methods("POST").Path("/tournament/{id}/join").HandlerFunc(api.JoinTournament)
 	r.Methods("POST").Path("/tournament/{id}/finish").HandlerFunc(api.FinishTournament)
 	r.Methods("DELETE").Path("/tournament/{id}").HandlerFunc(api.CancelTournament)
+
+	r.Methods("GET").Path("/health-check").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Methods("POST").Path("/panic").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		os.Exit(1)
+	})
 
 	return r
 }
