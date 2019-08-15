@@ -9,8 +9,6 @@ fmt:
 .PHONY: test
 test: 
 	sudo docker-compose up --build -d
-	echo Waiting
-	sleep 2
 	go test test/main_test.go
 	sudo docker-compose down
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/777777miSSU7777777/gaming-website/model"
 
@@ -138,6 +139,9 @@ func (c APIClient) CancelTournament(id int64) int {
 func TestUserApiWithCorrectData(t *testing.T) {
 	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
 
+	// health check
+	client.ServiceHealthCheck(t)
+
 	// New user test
 	code, newUser := client.NewUser("test_user", 1000)
 
@@ -176,8 +180,24 @@ func TestUserApiWithCorrectData(t *testing.T) {
 	require.Equal(t, http.StatusOK, code)
 }
 
+func (c APIClient) ServiceHealthCheck(t *testing.T) {
+	timeout, _ := time.ParseDuration("3s")
+	for i := 0; i < 10; i++ {
+		resp, err := c.client.Get(c.baseURL + "/health-check")
+		if err != nil {
+			time.Sleep(timeout)
+		} else if resp.StatusCode == http.StatusOK {
+			return
+		}
+	}
+	t.FailNow()
+}
+
 func TestUserApiWithIncorrectData(t *testing.T) {
 	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
+
+	// health check
+	client.ServiceHealthCheck(t)
 
 	// New user with empty name
 	code, err := client.UserErr("POST", "/user", []byte(`{"name": "", "balance": 1000}`))
@@ -277,6 +297,9 @@ func TestUserApiWithIncorrectData(t *testing.T) {
 func TestTournamentFinish(t *testing.T) {
 	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
 
+	// health check
+	client.ServiceHealthCheck(t)
+
 	// New tournament test
 	code, newTournament := client.NewTournament("test_tournament", 1000)
 
@@ -366,6 +389,9 @@ func TestTournamentFinish(t *testing.T) {
 
 func TestTournamentCancel(t *testing.T) {
 	client := APIClient{client: &http.Client{}, baseURL: "http://127.0.0.1:8080"}
+
+	// health check
+	client.ServiceHealthCheck(t)
 
 	// Create new tournament
 	code, newTournament := client.NewTournament("test_tournament", 1000)
