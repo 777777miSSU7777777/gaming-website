@@ -3,7 +3,7 @@ version: '3.7'
 services:
   service:
     restart: on-failure
-    build: .
+    image: 777777missu7777777/gaming-website:latest
     ports:
       - 8080:8080
     links:

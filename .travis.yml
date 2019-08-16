@@ -1,0 +1,23 @@
+language: go
+go:
+- 1.12.x
+services:
+- docker
+sudo: true
+jobs:
+  include:
+  - stage: build
+    script:
+    - bash docker_push.sh
+  - stage: deploy
+    before_install:
+    - openssl aes-256-cbc -K $encrypted_70298db3af95_key -iv $encrypted_70298db3af95_iv
+    -in blabla.pem.enc -out blabla.pem -d
+    script:
+    - bash deploy.sh
+      
+
+stages:
+  - build
+  - deploy
+
