@@ -1,9 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"os"
-	"fmt"
 
 	"github.com/gorilla/mux"
 )
@@ -32,6 +32,9 @@ func NewHttpServer(api API) http.Handler {
 	})
 	r.Methods("GET").Path("/hello").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "hello world")
+	})
+	r.Methods("POST").Path("/ping").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "pong")
 	})
 
 	return r
