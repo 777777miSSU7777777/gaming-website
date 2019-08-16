@@ -1,5 +1,5 @@
 #!/bin/bash
-ssh $SSH_USER@$SERVER_IP <<EOF
+ssh -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
     cd go/appi/src
     if [ ! -d $LOCAL_REPO/.git ]
     then
