@@ -10,6 +10,9 @@ jobs:
   include:
   - stage: build
     script:
+    - bash docker_build.sh
+  - stage: push
+    script:
     - bash docker_push.sh
   - stage: deploy
     before_script:
@@ -21,4 +24,7 @@ jobs:
 
 stages:
   - build
-  - deploy
+  - name: push
+    if: branch = deploy
+  - name: deploy
+    if: branch = deploy

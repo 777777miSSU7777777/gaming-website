@@ -10,7 +10,8 @@ ssh -tt -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
     fi
 
     git checkout deploy
-    docker-compose down
+    docker-compose stop
+    docker-compose pull
     docker-compose up -d
     exit
 EOF
