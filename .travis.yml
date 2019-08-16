@@ -10,7 +10,7 @@ jobs:
   include:
   - stage: build
     script:
-    - bash docker_build.sh
+    - go build
   - stage: push
     script:
     - bash docker_push.sh
