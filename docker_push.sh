@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE=DOCKER_LOGIN:$IMAGE_NAME
+IMAGE=$DOCKER_LOGIN:$IMAGE_NAME
 
 docker build -t $IMAGE:$TAG .
 
