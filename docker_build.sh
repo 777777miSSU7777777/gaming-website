@@ -1,5 +1,3 @@
 #!/bin/bash
 
-VERSION="latest"
-
-docker build -t $IMAGE_TAG:$VERSION .
+docker build -t $IMAGE_TAG:$VERSION_TAG .
