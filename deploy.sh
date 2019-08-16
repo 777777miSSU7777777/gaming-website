@@ -1,6 +1,5 @@
 #!/bin/bash
 ssh -tt -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
-    cd go/appi/src
     if [ ! -d $LOCAL_REPO/.git ]
     then
         git clone $REPO_SRC $LOCAL_REPO
