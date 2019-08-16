@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ssh -tt -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
     if [ ! -d $LOCAL_REPO/.git ]
     then
@@ -11,7 +12,7 @@ ssh -tt -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
 
     git checkout deploy
     docker-compose stop
-    docker-compose pull
+    echo "TAG=$(git log -1 --pretty=%h)" > .env
     docker-compose up -d
     exit
 EOF

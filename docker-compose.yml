@@ -3,7 +3,7 @@ version: '3.7'
 services:
   service:
     restart: on-failure
-    image: 777777missu7777777/gaming-website:latest
+    image: 777777missu7777777/gaming-website:${TAG}
     ports:
       - 8080:8080
     links:
