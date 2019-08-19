@@ -30,15 +30,6 @@ func NewHttpServer(api API) http.Handler {
 	r.Methods("POST").Path("/panic").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		os.Exit(1)
 	})
-	r.Methods("GET").Path("/hello").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "hello world")
-	})
-	r.Methods("POST").Path("/ping").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "pong")
-	})
-	r.Methods("GET").Path("/qqq").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "qqq")
-	})
 
 	return r
 }
