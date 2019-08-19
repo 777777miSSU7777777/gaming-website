@@ -25,6 +25,6 @@ jobs:
 stages:
   - build
   - name: push
-    if: branch = deploy
+    if: tag = deploy
   - name: deploy
-    if: branch = deploy
+    if: tag = deploy
