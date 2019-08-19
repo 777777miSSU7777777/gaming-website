@@ -25,6 +25,6 @@ jobs:
 stages:
   - build
   - name: push
-    if: tag = deploy
+    if: tag ~= /^deploy(\d)+$/
   - name: deploy
-    if: tag = deploy
+    if: tag = /^deploy(\d)+$/
