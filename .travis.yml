@@ -27,4 +27,4 @@ stages:
   - name: push
     if: tag ~= /^deploy(\d)+$/
   - name: deploy
-    if: tag = /^deploy(\d)+$/
+    if: tag ~= /^deploy(\d)+$/
