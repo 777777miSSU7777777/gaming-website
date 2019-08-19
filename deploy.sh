@@ -8,7 +8,7 @@ ssh -tt -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
     else 
         cd $LOCAL_REPO
         git checkout $TRAVIS_BRANCH
-        git pull $REPO_SRC
+        git pull
     fi
 
     docker-compose stop
