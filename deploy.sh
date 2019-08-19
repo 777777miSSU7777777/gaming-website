@@ -12,7 +12,7 @@ ssh -tt -i blabla.pem $SSH_USER@$SERVER_IP <<EOF
     fi
 
     docker-compose stop
-    echo $(git rev-parse HEAD) > .env
+    echo "TAG=$(git rev-parse HEAD)" > .env
     docker-compose up -d
     exit
 EOF
