@@ -43,6 +43,15 @@ func (s Service) GetUser(id int64) (model.User, error) {
 	return user, nil
 }
 
+func (s Service) GetAllUsers() ([]model.User, error) {
+	users, err := s.repo.GetAllUsers(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s Service) DeleteUser(id int64) error {
 	err := s.repo.DeleteUserByID(context.Background(), id)
 	if err != nil {

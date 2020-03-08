@@ -14,6 +14,7 @@ func NewHttpServer(api API) http.Handler {
 
 	r.Methods("POST").Path("/user").HandlerFunc(api.NewUser)
 	r.Methods("GET").Path("/user/{id}").HandlerFunc(api.GetUser)
+	r.Methods("GET").Path("/user").HandlerFunc(api.GetAllUsers)
 	r.Methods("DELETE").Path("/user/{id}").HandlerFunc(api.DeleteUser)
 	r.Methods("POST").Path("/user/{id}/take").HandlerFunc(api.UserTake)
 	r.Methods("POST").Path("/user/{id}/fund").HandlerFunc(api.UserFund)

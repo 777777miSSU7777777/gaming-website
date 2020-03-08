@@ -52,6 +52,26 @@ func (r Repository) GetUserByID(ctx context.Context, id int64) (model.User, erro
 	return user, nil
 }
 
+func (r Repository) GetAllUsers(ctx context.Context) ([]model.User, error) {
+	rows, err := r.db.Query("SELECT * FROM USERS")
+
+	if err != nil {
+		return nil, fmt.Errorf("get all users error: %v", err)
+	}
+
+	users := []model.User{}
+	for rows.Next() {
+		user := model.User{}
+		err = rows.Scan(&user.ID, &user.Username, &user.Balance)
+		if err != nil {
+			return nil, fmt.Errorf("get all users error: %v", err)
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func (r Repository) DeleteUserByID(ctx context.Context, id int64) error {
 	res, err := r.db.Exec("DELETE FROM USERS WHERE USER_ID=?", id)
 	if err != nil {

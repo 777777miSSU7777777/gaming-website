@@ -9,6 +9,10 @@ type GetUserRequest struct {
 	ID int64
 }
 
+type GetAllUsersRequest struct {
+	
+}
+
 type DeleteUserRequest GetUserRequest
 
 type UserTakeRequest struct {

@@ -1,5 +1,9 @@
 package api
 
+import (
+	"github.com/777777miSSU7777777/gaming-website/model"
+)
+
 type NewUserResponse struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
@@ -7,6 +11,8 @@ type NewUserResponse struct {
 }
 
 type GetUserResponse NewUserResponse
+
+type GetAllUsersResponse []model.User
 
 type DeleteUserResponse struct {
 }

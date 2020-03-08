@@ -85,6 +85,16 @@ func (a API) GetUser(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(GetUserResponse{resp.ID, resp.Username, resp.Balance})
 }
 
+func (a API) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	// var req GetAllUsersRequest
+	users, err := a.svc.GetAllUsers()
+	if err != nil {
+		writeError(w, 400, ServiceError, fmt.Errorf("error while getting all users: %v", err))
+	}
+	
+	err = json.NewEncoder(w).Encode(GetAllUsersResponse(users))
+}
+
 func (a API) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var req DeleteUserRequest
 	vars := mux.Vars(r)
